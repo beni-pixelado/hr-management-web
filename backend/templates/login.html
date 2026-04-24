@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Login - HR Management System</title>
+   
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+</head>
+
+<body>
+    <div class="container">
+        
+        <h1>Login to the System</h1>
+        
+        <form action="/login" method="POST">
+            
+            <label for="username">Username:</label>
+            
+            <input type="text" id="username" name="username" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            
+
+            <button type="submit">Login</button>
+            
+        </form>
+        
+        {{if.error}}
+        <div class="error">{{.error}}</div>
+        {{end}}
+        
+        {{if .success}}
+        <div class="success">{{.success}}</div>
+        {{end}}
+
+        <div class="page-link">
+            <a href="/register">Don't have an account? Sign up</a>
+        </div>
+    </div>
+</body>
+
+</html>
