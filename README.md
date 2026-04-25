@@ -240,9 +240,10 @@ make run
 | `PUT /employees/:id/status` | Update candidate status |
  
 ### Adding a Candidate
- 
-1. Navigate to the **Employees** page
-2. Fill in the candidate's name and job position
+
+0. Make a account
+1. Navigate to the **Dashboard** page
+2. Fill in the candidate's name, job position and email
 3. Optionally upload a profile photo (JPEG/PNG)
 4. Click **Add Candidate** — the candidate is created with `Pending` status by default
 ### Updating Candidate Status
@@ -260,8 +261,7 @@ make test        # Run test suites
 ---
  
 ## 📸 Screenshots
- 
-> **Note:** > Screenshots are representative placeholders. Replace them with real application images from your local or deployed environment..
+
  
 ### Dashboard
 <img src="docs/assets/rh-all-photo.png" width="800" style="border-radius: 12px;" />
