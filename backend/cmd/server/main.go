@@ -1,15 +1,11 @@
 package main
 
-
-
-
-
-
 import (
 	"hr-management-web/backend/handlers"
 	"log"
 	"net/http"
 	"strings"
+	"fmt"
 
 	"html/template"
 
@@ -75,13 +71,31 @@ func main() {
 
 
 	r.GET("/dashboard", func(c *gin.Context) {
-	var employees []handlers.Employee
-	db.Find(&employees)
+		search := strings.TrimSpace(c.DefaultQuery("search", ""))
 
+		var employees []handlers.Employee
+		var query = db
+
+    log.Printf("the search carried out was '%s'", search)  // LOG FORÇADO
+
+		if search != "" {
+			query = query.Where("full_name LIKE ? OR email LIKE ?",
+				"%"+search+"%",
+				"%"+search+"%")
+		}
+
+		query.Find(&employees)
+
+    log.Printf("results: %d funcionários encontrados", len(employees))  // LOG FORÇADO
+
+    // Para debug: mostra também no HTML
 		c.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"employees": employees,
+			"employees": employees,
+			"search":    search,
+			"debug_msg": fmt.Sprintf("Busca por '%s' retornou %d resultados", search, len(employees)),
+		})
 	})
-})
+
 	r.GET("/employees", handlers.GetEmployees)
 
 	r.POST("/register", handlers.Register)

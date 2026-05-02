@@ -12,5 +12,8 @@ start:
 setup:
 	go mod tidy
 
-test:
+test-user:
 	go run ./backend/cmd/seed_users
+
+test-employee:
+	go run backend/cmd/seed_employee/main.go

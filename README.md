@@ -216,7 +216,7 @@ Or directly:
 go run ./backend/cmd/server
 ```
  
-The application will be available at: **`http://localhost:8080`**
+The application will be available at: **`http://localhost:8000`**
  
 ---
  

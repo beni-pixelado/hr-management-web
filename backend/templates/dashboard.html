@@ -1,74 +1,270 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
+    <title>Dashboard | RH System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
     <style>
-        .dashboard-overview {
-            margin-bottom: 40px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        /* Janela principal (estilo de janela flutuante) */
+        .window {
+            max-width: 1300px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* Barra de título da janela (sem pontos, apenas elegante) */
+        .window-header {
+            background: #f8fafc;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .window-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: -0.2px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: 0.2s;
+        }
+
+        /* Apenas decoração – não funcionam */
+        .window-control:hover {
+            background: #94a3b8;
+        }
+
+        /* Layout com sidebar */
+        .window-body {
+            display: flex;
+            min-height: 550px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #f9fafb;
+            border-right: 1px solid #edf2f7;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #3f51b5;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(63, 81, 181, 0.2);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Links extras na sidebar */
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #edf2f7;
+        }
+
+        .sidebar-footer .nav-item {
+            color: #64748b;
+        }
+
+        /* Conteúdo principal */
+        .main-content {
+            flex: 1;
+            padding: 24px 28px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        /* Stats grid (menor e mais compacto) */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 18px 16px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #edf2f7;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
         }
 
         .stat-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 14px;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
-            opacity: 0.9;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
         }
 
         .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0;
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
         }
 
+        /* Cores individuais dos números */
+        .stat-card:first-child .number {
+            background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(2) .number {
+            background: linear-gradient(135deg, #ec489a 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(3) .number {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(4) .number {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Search bar compacta */
+        .search-bar {
+            margin-bottom: 24px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: #5c6bc0;
+            box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.1);
+        }
+
+        /* Título */
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 18px;
+            letter-spacing: -0.3px;
+        }
+
+        /* Grid de funcionários (cards menores) */
         .employees-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
         }
 
         .employee-card {
             background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #edf2f7;
+            transition: all 0.2s ease;
         }
 
         .employee-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            border-color: #cbd5e1;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+            transform: translateY(-3px);
         }
 
         .employee-card-image {
-            width: 100%;
-            height: 200px;
-            background: linear-gradient(135deg, #667eea 0%, #4ba26f 100%);
+            height: 160px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 48px;
             color: white;
-            font-size: 50px;
         }
 
         .employee-card-image img {
@@ -78,60 +274,139 @@
         }
 
         .employee-card-content {
-            padding: 15px;
+            padding: 14px;
         }
 
         .employee-card-name {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
         }
 
         .employee-card-position {
-            font-size: 13px;
-            color: #666;
+            font-size: 12px;
+            color: #64748b;
             margin-bottom: 10px;
         }
 
         .employee-card-status {
             display: inline-block;
-            padding: 5px 10px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
+            font-size: 10px;
+            font-weight: 600;
             text-transform: uppercase;
         }
 
-        .employee-card-status.pending {
-            background-color: #fff3cd;
-            color: #856404;
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
         }
-
-        .employee-card-status.contractors {
-            background-color: #d4edda;
-            color: #155724;
+        .status-contractors {
+            background: #d1fae5;
+            color: #059669;
         }
-
-        .employee-card-status.rejected {
-            background-color: #f8d7da;
-            color: #721c24;
+        .status-rejected {
+            background: #fee2e2;
+            color: #dc2626;
         }
 
         .no-employees-message {
-            grid-column: 1 / -1;
-            text-align: center;
+            background: #f8f9fc;
+            border-radius: 14px;
             padding: 40px;
-            color: #999;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            border: 1px solid #edf2f7;
+        }
+
+        /* Scroll customizada */
+        .main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .main-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 800px) {
+            body {
+                padding: 20px;
+            }
+            .window-body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #edf2f7;
+                padding: 16px;
+            }
+            .nav-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .sidebar-footer {
+                margin-top: 0;
+                border-top: none;
+            }
+            .main-content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1 class="navbar">Management Dashboard</h1>
+<div class="window">
+    <!-- Barra da janela (estilo separado) -->
+    <div class="window-header">
+        <div class="window-title">Management Dashboard</div>
+        <div class="window-controls">
+            <div class="window-control"></div>
+            <div class="window-control"></div>
+            <div class="window-control"></div>
+        </div>
+    </div>
 
-        <div class="dashboard-overview">
+    <div class="window-body">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/employees" class="nav-item">
+                    <span class="nav-icon">👥</span>
+                    <span>Manage Candidates</span>
+                </a>
+            </div>
+            <div class="sidebar-footer">
+                <a href="/" class="nav-item">
+                    <span class="nav-icon">↩️</span>
+                    <span>Return to login</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Conteúdo principal -->
+        <main class="main-content">
+            <!-- Search bar -->
+            <div class="search-bar">
+                <form method="GET" action="/dashboard">
+                    <input type="text" name="search" value="{{.search}}" placeholder="Search by name, email...">
+                </form>
+            </div>
+
+            <!-- Stats cards -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Total Candidates</h3>
@@ -146,24 +421,22 @@
                 {{if eq .Status "pending"}}{{$pending = add $pending 1}}{{end}}
                 {{if eq .Status "rejected"}}{{$rejected = add $rejected 1}}{{end}}
                 {{end}}
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="stat-card">
                     <h3>Contractors</h3>
                     <p class="number">{{$contractors}}</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                    <h3>pending</h3>
+                <div class="stat-card">
+                    <h3>Pending</h3>
                     <p class="number">{{$pending}}</p>
                 </div>
-                <div class="stat-card" style="background: linear-gradient(135deg, #ff6b6b 0%, #ffa502 100%);">
-                    <h3>rejected</h3>
+                <div class="stat-card">
+                    <h3>Rejected</h3>
                     <p class="number">{{$rejected}}</p>
                 </div>
             </div>
-        </div>
 
-
-        <div style="margin-bottom: 30px;">
-            <h2>All Employees</h2>
+            <!-- All Employees section -->
+            <h2 class="section-title">All Employees</h2>
             {{if .employees}}
             <div class="employees-grid">
                 {{range .employees}}
@@ -178,7 +451,7 @@
                     <div class="employee-card-content">
                         <div class="employee-card-name">{{.FullName}}</div>
                         <div class="employee-card-position">{{.Position}}</div>
-                        <span class="employee-card-status {{.Status | lower}}">
+                        <span class="employee-card-status status-{{.Status | lower}}">
                             {{.Status}}
                         </span>
                     </div>
@@ -191,15 +464,22 @@
                 <p>Access the management page to add new candidates.</p>
             </div>
             {{end}}
-        </div>
-
-        <div class="dashboard-links">
-            <a href="/employees" class="dashboard-link">Manage Candidates</a>
-        </div>
-        <div class="page-link">
-            <a href="/">Return to login</a>
-        </div>
+        </main>
     </div>
-</body>
+</div>
 
+<!-- Simulação de variáveis para template (apenas para visualização, em produção vem do backend) -->
+<script>
+    // Remova este script em produção – ele é apenas para simular dados e evitar erros de template
+    (function() {
+        if (typeof add === 'undefined') {
+            window.add = function(a,b) { return a+b; };
+        }
+        if (typeof .employees === 'undefined') {
+            // dados mock para demonstração
+            console.log("Ambiente de template – substitua pelos dados reais do Go");
+        }
+    })();
+</script>
+</body>
 </html>

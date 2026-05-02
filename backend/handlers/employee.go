@@ -201,3 +201,39 @@ func DeleteEmployee(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Funcionário deletado com sucesso"})
 }
+
+// GetEmployeesAPI retorna lista filtrada de funcionários em JSON
+func GetEmployeesAPI(c *gin.Context) {
+    // Pega os parâmetros da URL
+    search := c.DefaultQuery("search", "")      // ?search=joao
+    status := c.DefaultQuery("status", "all")   // ?status=pending
+    
+    // Começa a query
+    query := DB.Model(&Employee{})
+    
+    // Filtro por nome ou email (se tiver busca)
+    if search != "" {
+        query = query.Where("full_name LIKE ? OR email LIKE ?", 
+            "%"+search+"%", 
+            "%"+search+"%")
+    }
+    
+    // Filtro por status (se não for "all")
+    if status != "all" {
+        query = query.Where("status = ?", status)
+    }
+    
+    // Executa a busca
+    var employees []Employee
+    if err := query.Find(&employees).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{
+            "error": "Erro ao buscar funcionários",
+        })
+        return
+    }
+    
+    // Retorna como JSON
+    c.JSON(http.StatusOK, gin.H{
+        "employees": employees,
+        "total":     len(employees),
+    })}
