@@ -9,10 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"math"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	
 )
 
 var DB *gorm.DB
@@ -105,11 +108,35 @@ func saveUploadedImage(c *gin.Context, file *multipart.FileHeader) (string, erro
 
 func GetEmployees(c *gin.Context) {
 	var employees []Employee
-	DB.Find(&employees)
+
+	pageStr := c.DefaultQuery("page", "1")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit := 20
+	offset := (page - 1) * limit
+
+	var totalEmployees int64
+	DB.Model(&Employee{}).Count(&totalEmployees)
+
+	DB.
+		Limit(limit).
+		Offset(offset).
+		Find(&employees)
+
+	totalPages := int(math.Ceil(float64(totalEmployees) / float64(limit)))
 
 	c.HTML(http.StatusOK, "employees.html", gin.H{
-		"employees": employees,
-	})
+	"employees":      employees,
+	"currentPage":    page,
+	"totalPages":     totalPages,
+	"totalEmployees": totalEmployees,
+	"prevPage":       page - 1,
+	"nextPage":       page + 1,
+})
 }
 
 func CreateEmployee(c *gin.Context) {
@@ -236,4 +263,18 @@ func GetEmployeesAPI(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "employees": employees,
         "total":     len(employees),
-    })}
+    })
+}
+
+func BadgeHandler(c *gin.Context) {
+    id := c.Param("id")
+
+    var employee Employee
+
+    if err := DB.First(&employee, id).Error; err != nil {
+        c.String(404, "Employee not found")
+        return
+    }
+
+    c.HTML(200, "id-card.html", employee)
+}

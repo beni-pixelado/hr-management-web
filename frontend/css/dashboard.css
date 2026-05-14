@@ -1,371 +1,368 @@
-/* dashboard.css - Estilo moderno inspirado no macOS */
+    @import url(https://fonts.googleapis.com);
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    @import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap");
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        /* Janela principal (estilo de janela flutuante) */
+        .window {
+            max-width: 1300px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f1f2f6;
-    min-height: 100vh;
-    padding: 40px 20px;
-}
+        /* Barra de título da janela (sem pontos, apenas elegante) */
+        .window-header {
+            background: #f8fafc;
+            padding: 14px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: top;
+            justify-content: space-between;
+        }
 
-/* Container principal */
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-}
+        .window-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: -0.2px;
+        }
 
-/* Header simples e elegante - SEM os pontos */
-h1.navbar {
-    background: #ffffff;
-    color: #1a1a2e;
-    font-size: 20px;
-    font-weight: 600;
-    padding: 20px 28px;
-    margin: 0;
-    border-bottom: 2px solid #f0f0f5;
-    text-align: left;
-    letter-spacing: -0.3px;
-}
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
 
-/* Search bar */
-div[style*="background: #f0f0f0"] {
-    background: #f8f9fc !important;
-    padding: 20px 28px !important;
-    margin: 0 !important;
-    border-bottom: 1px solid #edf2f7;
-    border-radius: 0 !important;
-}
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            transition: 0.2s;
+        }
 
-form[method="GET"] input[name="search"] {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 14px;
-    font-family: 'Inter', sans-serif;
-    transition: all 0.2s ease;
-}
+        /* Apenas decoração – não funcionam */
+        .window-control:hover {
+            background: #94a3b8;
+        }
 
-form[method="GET"] input[name="search"]:focus {
-    outline: none;
-    border-color: #5c6bc0;
-    box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.1);
-}
+        /* Layout com sidebar */
+        .window-body {
+            display: flex;
+            min-height: 550px;
+        }
 
-/* Stats grid */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    padding: 28px;
-    margin: 0;
-}
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #f9fafb;
+            border-right: 1px solid #edf2f7;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
 
-.stat-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fc 100%);
-    border-radius: 16px;
-    padding: 24px 20px;
-    text-align: center;
-    border: 1px solid #edf2f7;
-    transition: all 0.25s ease;
-}
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
 
-.stat-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-3px);
-}
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
 
-.stat-card h3 {
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 12px;
-}
+        .nav-item:hover {
+            background: #f1f5f9;
+            color: #3f51b5;
+        }
 
-.stat-card .number {
-    font-size: 42px;
-    font-weight: 700;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    line-height: 1;
-}
+        .nav-item.active {
+            background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+            color: white;
+            box-shadow: 0 2px 6px rgba(63, 81, 181, 0.2);
+        }
 
-/* Cores modernas para cada card */
-.stat-card:first-child .number {
-    background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+        .nav-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
 
-.stat-card:nth-child(2) .number {
-    background: linear-gradient(135deg, #ec489a 0%, #db2777 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+        .show-all-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
 
-.stat-card:nth-child(3) .number {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+        /* Links extras na sidebar */
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #edf2f7;
+        }
 
-.stat-card:nth-child(4) .number {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
+        .sidebar-footer .nav-item {
+            color: #64748b;
+        }
 
-/* Título */
-h2 {
-    font-size: 24px;
-    font-weight: 600;
-    color: #1e293b;
-    padding: 0 28px;
-    margin: 12px 0 20px 0;
-    letter-spacing: -0.4px;
-}
+        /* Conteúdo principal */
+        .main-content {
+            flex: 1;
+            padding: 24px 28px;
+            overflow-y: auto;
+            background: white;
+        }
 
-/* Employees grid */
-.employees-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 24px;
-    padding: 0 28px 28px 28px;
-}
+        /* Stats grid (menor e mais compacto) */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
 
-/* Employee card */
-.employee-card {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #edf2f7;
-    transition: all 0.25s ease;
-}
+        .stat-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 18px 16px;
+            text-align: center;
+            border: 1px solid #edf2f7;
+            transition: all 0.2s ease;
+        }
 
-.employee-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12);
-    transform: translateY(-4px);
-}
+        .stat-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+            transform: translateY(-2px);
+        }
 
-/* Image container */
-.employee-card-image {
-    height: 200px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 56px;
-    position: relative;
-}
+        .stat-card h3 {
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+        }
 
-.employee-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
 
-/* Content area */
-.employee-card-content {
-    padding: 20px;
-}
+        /* Cores individuais dos números */
+        .stat-card:first-child .number {
+            background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(2) .number {
+            background: linear-gradient(135deg, #ec489a 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(3) .number {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(4) .number {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-.employee-card-name {
-    font-size: 17px;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 6px;
-}
+        /* Search bar compacta */
+        .search-bar {
+            margin-bottom: 24px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            transition: 0.2s;
+        }
+        .search-bar input:focus {
+            outline: none;
+            border-color: #5c6bc0;
+            box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.1);
+        }
 
-.employee-card-position {
-    font-size: 13px;
-    color: #64748b;
-    margin-bottom: 14px;
-}
+        /* Título */
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 18px;
+            letter-spacing: -0.3px;
+        }
 
-/* Status badges modernos */
-.employee-card-status {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 30px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-}
+        /* Grid de funcionários (cards menores) */
+        .employees-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 24px;
+        }
 
-.employee-card-status.pending {
-    background: #fef3c7;
-    color: #d97706;
-}
+        .employee-card {
+            background: white;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #edf2f7;
+            transition: all 0.2s ease;
+        }
 
-.employee-card-status.contractors {
-    background: #d1fae5;
-    color: #059669;
-}
+        .employee-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+            transform: translateY(-3px);
+        }
 
-.employee-card-status.rejected {
-    background: #fee2e2;
-    color: #dc2626;
-}
+        .employee-card-image {
+            height: 160px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
 
-/* No employees message */
-.no-employees-message {
-    background: #f8f9fc;
-    border-radius: 16px;
-    padding: 60px 40px;
-    text-align: center;
-    margin: 0 28px 28px 28px;
-    border: 1px solid #edf2f7;
-}
+        .employee-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-.no-employees-message p {
-    color: #64748b;
-    font-size: 14px;
-    margin: 8px 0;
-}
+        .employee-card-content {
+            padding: 14px;
+        }
 
-/* Botões modernos */
-.dashboard-links,
-.page-link {
-    padding: 0 28px;
-    margin: 0 0 28px 0;
-}
+        .employee-card-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
 
-/* Botão primário */
-.dashboard-link {
-    background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
-    color: white;
-    padding: 12px 28px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.2s ease;
-    border: none;
-    box-shadow: 0 2px 8px rgba(63, 81, 181, 0.2);
-}
+        .employee-card-position {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
 
-.dashboard-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(63, 81, 181, 0.3);
-    background: linear-gradient(135deg, #3f51b5 0%, #3949ab 100%);
-}
+        .employee-card-status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
 
-.dashboard-link:active {
-    transform: translateY(0);
-}
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .status-contractors {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status-rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
 
-/* Botão secundário */
-.page-link a {
-    background: white;
-    color: #5c6bc0;
-    padding: 10px 24px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    display: inline-block;
-    transition: all 0.2s ease;
-    border: 1px solid #cbd5e1;
-}
+        .no-employees-message {
+            background: #f8f9fc;
+            border-radius: 14px;
+            padding: 40px;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            border: 1px solid #edf2f7;
+        }
 
-.page-link a:hover {
-    background: #f8f9fc;
-    border-color: #5c6bc0;
-    transform: translateY(-1px);
-}
+        /* Scroll customizada */
+        .main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .main-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .main-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
 
-/* Responsividade */
-@media (max-width: 768px) {
-    body {
-        padding: 20px 12px;
-    }
-    
-    .stats-grid {
-        padding: 20px;
-        gap: 12px;
-    }
-    
-    .stat-card .number {
-        font-size: 32px;
-    }
-    
-    .employees-grid {
-        padding: 0 20px 20px 20px;
-        gap: 16px;
-    }
-    
-    h2 {
-        font-size: 20px;
-        padding: 0 20px;
-    }
-    
-    h1.navbar {
-        font-size: 18px;
-        padding: 16px 20px;
-    }
-    
-    .dashboard-links,
-    .page-link {
-        padding: 0 20px;
-        margin: 0 0 20px 0;
-    }
-}
-
-/* Animação suave */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.employee-card {
-    animation: fadeInUp 0.3s ease-out forwards;
-}
-
-/* Scrollbar moderna */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
+        /* Responsivo */
+        @media (max-width: 800px) {
+            body {
+                padding: 20px;
+            }
+            .window-body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #edf2f7;
+                padding: 16px;
+            }
+            .nav-menu {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .sidebar-footer {
+                margin-top: 0;
+                border-top: none;
+            }
+            .main-content {
+                padding: 20px;
+            }
+        }

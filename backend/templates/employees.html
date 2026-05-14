@@ -1,127 +1,189 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employees to Hire</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="/css/employees.css">
-</head>
-
 <body>
-    <div class="container">
-        <h1>Employees to Hire</h1>
 
-
-        <div class="form-section">
-            <h2>Add New Candidate</h2>
-            <form method="POST" action="/employees" enctype="multipart/form-data" class="employee-form">
-                <div class="form-group">
-                    <label for="full_name">Full Name:</label>
-                    <input type="text" id="full_name" name="full_name" required placeholder="ethan smith">
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required placeholder="ethan@example.com">
-                </div>
-                <div class="form-group">
-                    <label for="position">Position:</label>
-                    <input type="text" id="position" name="position" required placeholder="Developer">
-                </div>
-                <div class="form-group">
-                    <label for="photo">Photo (optional - Max 5MB):</label>
-                    <input type="file" id="photo" name="photo" accept="image/*">
-                    <small>Accepted formats: JPG, PNG, GIF, WebP</small>
-                </div>
-                <button type="submit" class="btn btn-primary">Add Candidate</button>
-            </form>
-        </div>
-
-
-        <div class="employees-section">
-            <h2>List of Candidates</h2>
-            {{if .employees}}
-            <div class="employees-table-wrapper">
-                <table class="employees-table">
-                    <thead>
-                        <tr>
-                            <th>Photo</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Position</th>
-                            <th>Status</th>
-                            <th>Hiring Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .employees}}
-                        <tr class="status-{{.Status | lower}}">
-                            <td class="photo-cell">
-                                {{if .Photo}}
-                                <img src="/uploads/{{.Photo}}" alt="Foto de {{.FullName}}" width="50" height="50"
-                                    class="employee-thumbnail">
-                                {{else}}
-                                <span class="no-photo">👤</span>
-                                {{end}}
-                            </td>
-                            <td>{{.FullName}}</td>
-                            <td>{{.Email}}</td>
-                            <td>{{.Position}}</td>
-                            <td>
-                                <span class="status-badge status-{{.Status | lower}}">
-                                    {{.Status}}
-                                </span>
-                            </td>
-                            <td>{{.HireDate}}</td>
-                            <td class="actions">
-                                {{if eq .Status "pending"}}
-                                <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
-                                    <input type="hidden" name="status" value="contractors">
-                                    <input type="date" name="hire_date" required>
-                                    <button type="submit" class="btn btn-success btn-sm">Hire</button>
-                                </form>
-                                <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
-                                    <input type="hidden" name="status" value="rejected">
-                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                                </form>
-                                {{end}}
-                                <button class="btn btn-delete btn-sm" onclick="deleteEmployee({{.ID}})">Deletar</button>
-                            </td>
-                        </tr>
-                        {{end}}
-                    </tbody>
-                </table>
+    <head>
+        <link rel="stylesheet" href="/css/employees.css">
+    </head>
+    <div class="window">
+        <!-- Barra da janela -->
+        <div class="window-header">
+            <div class="window-title">Management Dashboard</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
             </div>
-            {{else}}
-            <p class="no-employees">No candidates registered yet.</p>
-            {{end}}
         </div>
 
-        <div class="page-link">
-            <a href="/dashboard">Return to Dashboard</a>
+        <div class="window-body">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/employees" class="nav-item active">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Conteúdo principal -->
+            <main class="main-content">
+                <h1 class="section-title">Manage Candidates</h1>
+
+                <div class="form-section">
+                    <h2>Add New Candidate</h2>
+
+                    <form method="POST" action="/employees" enctype="multipart/form-data" class="employee-form">
+
+                        <div class="form-group">
+                            <label for="full_name">Full Name:</label>
+                            <input type="text" id="full_name" name="full_name" required placeholder="ethan smith">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required placeholder="ethan@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="position">Position:</label>
+                            <input type="text" id="position" name="position" required placeholder="Developer">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="photo">
+                                Photo (optional - Max 5MB):
+                            </label>
+
+                            <input type="file" id="photo" name="photo" accept="image/*">
+
+                            <small>
+                                Accepted formats: JPG, PNG, GIF, WebP
+                            </small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Add Candidate
+                        </button>
+                    </form>
+                </div>
+
+                <div class="employees-section">
+                    <h2>List of Candidates</h2>
+
+                    {{if .employees}}
+                    <div class="employees-table-wrapper">
+                        <table class="employees-table">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Position</th>
+                                    <th>Status</th>
+                                    <th>Hiring Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {{range .employees}}
+                                <tr class="status-{{.Status | lower}}">
+
+                                    <td class="photo-cell">
+                                        {{if .Photo}}
+                                        <img src="/uploads/{{.Photo}}" alt="Foto de {{.FullName}}" width="50"
+                                            height="50" class="employee-thumbnail">
+                                        {{else}}
+                                        <span class="no-photo">👤</span>
+                                        {{end}}
+                                    </td>
+
+                                    <td>{{.FullName}}</td>
+                                    <td>{{.Email}}</td>
+                                    <td>{{.Position}}</td>
+
+                                    <td>
+                                        <span class="status-badge status-{{.Status | lower}}">
+                                            {{.Status}}
+                                        </span>
+                                    </td>
+
+                                    <td>{{.HireDate}}</td>
+
+                                    <td class="actions">
+                                        {{if eq .Status "pending"}}
+
+                                        <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
+
+                                            <input type="hidden" name="status" value="contractors">
+
+                                            <input type="date" name="hire_date" required>
+
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                Hire
+                                            </button>
+                                        </form>
+
+                                        <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
+
+                                            <input type="hidden" name="status" value="rejected">
+
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                Reject
+                                            </button>
+                                        </form>
+
+                                        {{end}}
+
+                                        <button class="btn btn-delete btn-sm" onclick="deleteEmployee({{.ID}})">
+                                            Delete
+                                        </button>
+                                    </td>
+
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+
+                        {{if gt .currentPage 1}}
+                        <a href="/employees?page={{.prevPage}}" class="page-btn">
+                            ← Previous
+                        </a>
+                        {{end}}
+
+                        <span class="page-info">
+                            Page {{.currentPage}} of {{.totalPages}}
+                        </span>
+
+                        {{if lt .currentPage .totalPages}}
+                        <a href="/employees?page={{.nextPage}}" class="page-btn">
+                            Next →
+                        </a>
+                        {{end}}
+
+                    </div>
+
+                    {{else}}
+
+                    <p class="no-employees">
+                        No candidates registered yet.
+                    </p>
+
+                    {{end}}
+                </div>
+            </main>
         </div>
     </div>
-
-    <script>
-        function deleteEmployee(id) {
-            if (confirm('Are you sure you want to delete this candidate?')) {
-                fetch(`/employees/${id}`, {
-                    method: 'DELETE'
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message || 'Candidate successfully deleted');
-                        location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Erro:', error);
-                        alert('Error when deleting candidate');
-                    });
-            }
-        }
-    </script>
-</body>
-
-</html>

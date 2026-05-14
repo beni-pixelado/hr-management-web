@@ -1,15 +1,18 @@
+
 package handlers
 
 import (
 	"log"
 	"net/http"
 
+	"hr-management-web/internal/auth"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID       uint   `gorm:"primaryKey"` // Chave primária auto-incrementada
+	ID       uint   `gorm:"primaryKey"`
 	Username string `json:"username" gorm:"unique;not null"`
 	Password string `json:"password" gorm:"not null"`
 	Email    string `json:"email" gorm:"not null"`
@@ -48,6 +51,14 @@ func Register(c *gin.Context) {
 	c.HTML(http.StatusOK, "login.html", gin.H{"success": "Conta criada com sucesso! Faça login."})
 }
 
+func Logout(c *gin.Context) {
+	if err := auth.DestroySession(c); err != nil {
+		log.Println("Erro ao destruir sessão:", err)
+	}
+
+	c.Redirect(http.StatusFound, "/login")
+}
+
 func Login(c *gin.Context) {
 	username := c.PostForm("username")
 	email := c.PostForm("email")
@@ -69,5 +80,16 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Criação da sessão
+	if err := auth.CreateSession(c, user.ID); err != nil {
+		log.Println(" ERRO ao criar sessão:", err)
+		c.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Erro interno ao criar sessão"})
+		return
+	}
+
+	// Log de sucesso
+	log.Printf(" Sessão criada para UserID: %d | Username: %s", user.ID, user.Username)
+
+	// Redireciona para dashboard
 	c.Redirect(http.StatusFound, "/dashboard")
 }

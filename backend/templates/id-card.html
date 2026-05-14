@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+    <body>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>ID Card</title>
+            <link rel="stylesheet" href="/css/id-card.css">
+        </head>
+        <div class="window-header">
+            <div class="window-title">ID card
+            </div>
+            <div class="window">
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                </div>
+                <div class="card-body">
+                    <div class="employee-photo">
+                        {{if .Photo}}
+                        <img src="/uploads/{{.Photo}}" alt="Foto de {{.FullName}}" width="100"
+                        height="100" class="employee-card-photo">>
+                        {{else}}
+                        👤
+                        {{end}}
+                    </div>
+                    <div class="employee-info">
+                        <div>{{.FullName}}</div>
+                        <div>{{.Email}}</div>
+                        <div>{{.Position}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>

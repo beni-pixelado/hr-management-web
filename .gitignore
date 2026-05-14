@@ -1,11 +1,9 @@
-# Banco de dados
 data/*.db
 
-# uploads (imagens dos funcionários)
 uploads/
 
-# arquivos temporários
 *.log
 
-# binários Go
 bin/
+
+.env
