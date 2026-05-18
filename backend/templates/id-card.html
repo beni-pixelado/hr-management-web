@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -10,8 +10,29 @@
 </head>
 
 <body>
+
     <div class="container">
+
         <div class="card">
+
+            <div class="card-header">
+                <div class="card-top">
+        <a href="/dashboard" class="back-button">
+            ↩️ return to dashboard
+        </a>
+    </div>
+                <div class="company-badge">
+                    Employee Card
+                </div>
+
+                <div class="employee-id">
+                    #{{.ID}}
+                </div>
+            </div>
+
+            <div class="card">
+
+    <div class="card-body">
 
             <div class="card-body">
 
@@ -22,13 +43,15 @@
                         alt="Foto de {{.FullName}}"
                         class="employee-card-photo">
                     {{else}}
-                    👤
+                    <div class="photo-placeholder">
+                        👤
+                    </div>
                     {{end}}
                 </div>
 
                 <div class="employee-info">
 
-                    <div class="info-row">
+                    <div>
                         <div class="employee-name">
                             {{.FullName}}
                         </div>
@@ -38,21 +61,32 @@
                         </div>
                     </div>
 
-                    <div class="info-row">
-                        <div class="employee-email">
-                            {{.Email}}
+                    <div class="status-badge">
+                        {{.Status}}
+                    </div>
+
+                    <div class="info-group">
+
+                        <div class="info-card">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{.Email}}</span>
                         </div>
 
-                        <div class="employee-id">
-                            ID: {{.ID}}
+                        <div class="info-card">
+                            <span class="info-label">Employee ID</span>
+                            <span class="info-value">#{{.ID}}</span>
                         </div>
+
                     </div>
 
                 </div>
 
             </div>
+
         </div>
+
     </div>
+
 </body>
 
 </html>

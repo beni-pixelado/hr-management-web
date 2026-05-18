@@ -58,12 +58,12 @@
             transition: 0.2s;
         }
 
-        /* Apenas decoração – não funcionam */
+       
         .window-control:hover {
             background: #94a3b8;
         }
 
-        /* Layout com sidebar */
+        
         .window-body {
             display: flex;
             min-height: 550px;
@@ -129,7 +129,7 @@
             transition: all 0.2s ease;
         }
 
-        /* Links extras na sidebar */
+       
         .sidebar-footer {
             margin-top: auto;
             padding-top: 20px;
@@ -140,7 +140,7 @@
             color: #64748b;
         }
 
-        /* Conteúdo principal */
+        
         .main-content {
             flex: 1;
             padding: 24px 28px;
@@ -148,7 +148,7 @@
             background: white;
         }
 
-        /* Stats grid (menor e mais compacto) */
+       
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
