@@ -539,8 +539,8 @@ Tests run against an isolated test database instance. The `jordanlewis/gcassert`
 - [x] Redesigned dark UI with modern design system
 - [x] Session-based authentication with gorilla/sessions
 
-### v1.2 — Authentication Hardening
-- [ ] JWT-based authentication as an alternative to session cookies
+### v1.2 — Control (New functions)
+- [ ] Departaments functions
 - [ ] Role-based access control (Admin, Recruiter, Viewer)
 - [ ] Account management (change password, deactivate)
 

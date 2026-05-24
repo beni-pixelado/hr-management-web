@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departamentos</title>
+    <link rel="stylesheet" href="/css/departments.css">
+</head>
+
+<body>
+    <div class="window">
+
+        <div class="window-header">
+            <div class="window-title">departments</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    <a href="#" class="nav-item active">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>departaments</span>
+                    </a>
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="form-section">
+                    <h2>Add New Department</h2>
+
+                    <form method="POST" action="/department" enctype="multipart/form-data" class="employee-form">
+
+                        <div class="form-group">
+                            <label for="name">Name:</label>
+                            <input type="text" id="name" name="name" required placeholder="Technology">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="code">Code:</label>
+                            <input type="text" id="code" name="code" required placeholder="DEPT001">
+                        </div>
+
+                        <div class="form-group-full">
+                            <label for="boss_id">Manager:</label>
+                            <select name="boss_id" id="boss_id" class="form-select">
+                                <option value="">Select a manager</option>
+                                {{range .Employees}}
+                                <option value="{{.ID}}">{{.FullName}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Add Department
+                        </button>
+                    </form>
+                </div>
+
+                {{if .Departments}}
+                <div class="departments-list-section">
+                    <h2>Departments Created</h2>
+                    <div class="departments-grid">
+                        {{range .Departments}}
+                        <div class="department-card" >
+                            <div class="department-header">
+                                <h3>{{.Name}}</h3>
+                                <span class="department-code">{{.Code}}</span>
+                            </div>
+                            <div class="department-info">
+                                {{if .BossID}}
+                                <p class="info-label">Manager ID: <span>{{.BossID}}</span></p>
+                                {{else}}
+                                <p class="info-label">Manager: <span style="color: #94a3b8;">No manager assigned</span></p>
+                                {{end}}
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -55,6 +55,9 @@ db := database.DB
 	if err := db.AutoMigrate(&handlers.Employee{}); err != nil {
 		log.Fatal("Employee migration failure:", err)
 	}
+	if err := db.AutoMigrate(&handlers.Department{}); err != nil {
+		log.Fatal("Employee migration failure:", err)
+	}
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
@@ -150,21 +153,18 @@ db := database.DB
 					len(employees),
 				),
 			})
-		
-	
-		r.GET("/badge/:id", handlers.BadgeHandler)  
-		c.HTML(http.StatusOK, "id-card.html", nil)
-	
-		
+		})
 
 		protected.GET("/employees", handlers.GetEmployees)
 		protected.POST("/employees", handlers.CreateEmployee)
 		protected.POST("/employees/:id/status", handlers.UpdateEmployeeStatus)
 		protected.DELETE("/employees/:id", handlers.DeleteEmployee)
+		protected.GET("/department", handlers.DepartmentPageHandler)
+		protected.POST("/department", handlers.CreatedepartmentHandler)
 		protected.GET("/logout", handlers.Logout)
-		})
+	}
 
 	r.Run(":8000")
-}}
+}
 
 

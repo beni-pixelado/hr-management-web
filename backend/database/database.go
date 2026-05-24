@@ -21,5 +21,5 @@ func Connect() {
 
 	DB = db
 
-	log.Println("Banco conectado!")
+	log.Println("bank has connected")
 }
