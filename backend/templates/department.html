@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departamento - {{.Department.Name}}</title>
+    <link rel="stylesheet" href="/css/departments.css">
+    <style>
+        .member-list { margin-top: 16px; }
+        .member-item { display:flex; justify-content:space-between; align-items:center; padding:8px; border-radius:6px; background:#0f172a22; margin-bottom:8px }
+        .danger { background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:6px }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div class="window-title">department</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+                    <a href="/department" class="nav-item active">
+                        <span class="nav-icon">🗂️</span>
+                        <span>departaments</span>
+                    </a>
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="form-section">
+                    <h2>{{.Department.Name}}</h2>
+                    <p><strong>Code:</strong> {{.Department.Code}}</p>
+                    {{if .Department.BossID}}
+                    <p><strong>Manager ID:</strong> {{.Department.BossID}}</p>
+                    {{else}}
+                    <p><strong>Manager:</strong> <span style="color:#94a3b8">No manager assigned</span></p>
+                    {{end}}
+
+                    <form method="POST" action="/department/{{.Department.ID}}/add_employee" class="employee-form">
+                        <div class="form-group-full">
+                            <label for="employee_id">Add Employee to Department</label>
+                            <select name="employee_id" id="employee_id" class="form-select">
+                                <option value="">Select an employee</option>
+                                {{range .Employees}}
+                                <option value="{{.ID}}">{{.FullName}} — {{.Position}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add to Department</button>
+                    </form>
+
+                    <form method="POST" action="/department/{{.Department.ID}}/delete" onsubmit="return confirm('Delete this department?')" style="margin-top:12px">
+                        <button type="submit" class="danger">Delete Department</button>
+                    </form>
+                </div>
+
+                <div class="departments-list-section">
+                    <h2>Members</h2>
+                    <div class="member-list">
+                        {{if .Members}}
+                            {{range .Members}}
+                            <div class="member-item">
+                                <div>
+                                    <strong>{{.FullName}}</strong><br>
+                                    <small>{{.Position}} — {{.Email}}</small>
+                                </div>
+                                <div>
+                                    <a href="/badge/{{.ID}}" class="btn btn-primary">View Badge</a>
+                                </div>
+                            </div>
+                            {{end}}
+                        {{else}}
+                            <p style="color:#94a3b8">No employees assigned to this department.</p>
+                        {{end}}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

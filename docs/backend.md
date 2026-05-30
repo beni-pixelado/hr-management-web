@@ -2,77 +2,154 @@
 
 ## Structure
 
-The backend is split between `backend/handlers/` — where HTTP request/response logic lives — and `internal/` — where infrastructure and cross-cutting concerns live. This split is intentional and important: handlers should be thin translators between HTTP and business logic, not fat blobs that mix SQL queries, cookie manipulation, and template rendering in one function.
+The backend is split between `backend/handlers/` — where HTTP request/response logic lives — and `internal/` — where infrastructure and cross-cutting concerns live. Handlers call internal packages but not vice versa; this one-way dependency keeps the system testable and the layers independent.
 
 ## `backend/handlers/auth.go`
 
-This file owns the entire authentication surface: registering new accounts, processing login credentials, and destroying sessions on logout.
+Owns the entire authentication surface: registering new accounts, processing login credentials, and destroying sessions on logout.
 
-The **register handler** (`POST /register`) accepts a form submission with username, email, and password. It validates the inputs using `go-playground/validator/v10` struct tags, hashes the password with bcrypt, and inserts a new `User` row via GORM. If the email already exists (caught by the unique index), it re-renders the registration form with an error message rather than returning a raw 500.
+### Register (`POST /register`)
 
-The **login handler** (`POST /login`) queries the users table for a matching email, then calls `bcrypt.CompareHashAndPassword` to verify the credential. On success, it calls `auth.SetUser(...)` to write the session cookie, then redirects to `/dashboard`. On failure, it re-renders the login form with a generic "invalid credentials" message — deliberately vague to avoid confirming whether the email exists.
+Accepts a form submission with `username`, `email`, and `password`. Validates all fields are present, checks for an existing username via a GORM `Where` query, hashes the password with `bcrypt.GenerateFromPassword`, and inserts a new `User` row. On error, re-renders `register.html` with a user-facing message rather than returning a raw HTTP error code.
 
-The **logout handler** (`POST /logout`) calls `auth.Logout(...)`, which sets the cookie's `MaxAge` to `-1`, instructing the browser to delete it immediately, then redirects to `/login`.
+### Login (`POST /login`)
+
+Queries the users table with `username AND email`, then calls `bcrypt.CompareHashAndPassword` to verify the credential. On success, calls `auth.CreateSession(c, user.ID)` to write the signed session cookie, then redirects to `/dashboard`. On failure, renders a generic error message — deliberately vague to avoid confirming whether the username/email pair exists.
+
+### Logout (`GET /logout`)
+
+Calls `auth.DestroySession(c)`, which sets the session cookie's `MaxAge` to `-1`, instructing the browser to delete it immediately, then redirects to `/login`.
+
+---
 
 ## `backend/handlers/employee.go`
 
-This is the most complex handler file. It handles five distinct operations:
+The most complex handler file. Handles six distinct operations.
 
-**List + Search** (`GET /employees`) builds a conditional GORM query based on the `q` query parameter, applies `OFFSET`/`LIMIT` pagination, and passes both the result set and pagination metadata to the `employees.html` template. The count query runs on the same filtered condition so pagination totals are always accurate.
+### GetEmployees (`GET /employees`)
 
-**Create** (`POST /employees`) reads a multipart form (because the form includes a file upload for the profile photo), validates required fields, runs MIME type validation on the uploaded file using `gabriel-vasile/mimetype` to ensure only image types are accepted, saves the file to `backend/uploads/` with a UUID-based filename (preventing collisions and path traversal attacks), and inserts the `Employee` record. If no photo is uploaded, `PhotoURL` is left empty and the template falls back to a default avatar.
+Builds a conditional GORM query based on the optional `q` query parameter. When `q` is present, adds a `WHERE` clause with `ILIKE` matching across `full_name`, `position`, and `email`. Applies `OFFSET`/`LIMIT` pagination (20 per page by default). The `Count` query runs on the same filtered condition, ensuring pagination totals always reflect the filtered result set.
 
-**Status Update** (`PUT /employees/:id/status`) accepts the candidate ID from the route parameter and a `status` field from the JSON body. It validates that the status is one of the three allowed values (`Pending`, `Accepted`, `Rejected`) before writing to the database — rejecting arbitrary string values at the application layer rather than relying solely on the database.
+```go
+query := DB.Model(&Employee{})
 
-**Card View** (`GET /employees/:id/card`) fetches a single employee record and renders the `id-card.html` template, which displays a formatted candidate profile card suitable for printing or sharing.
+if search := strings.TrimSpace(c.Query("q")); search != "" {
+    term := "%" + search + "%"
+    query = query.Where(
+        "full_name ILIKE ? OR position ILIKE ? OR email ILIKE ?",
+        term, term, term,
+    )
+}
 
-## `backend/cmd/` — CLI Utilities
+var total int64
+query.Count(&total)
 
-The `cmd/` directory contains standalone runnable programs that share the same `internal/db` connection. This is a common Go pattern: multiple binaries from one module, each with its own `main.go`.
+var employees []Employee
+query.Offset(offset).Limit(limit).Find(&employees)
+```
 
-`cmd/seed_users/main.go` creates a set of test user accounts for local development. `cmd/seed_employee/main.go` creates test candidate records. `cmd/list_users/main.go` prints all user accounts — useful for verifying the database state without needing a database GUI. Having these as separate binaries means they can be run independently without starting the HTTP server.
+### CreateEmployee (`POST /employees`)
 
-## Routing in `cmd/server/main.go`
+Reads a multipart form (required for the photo upload), validates that `full_name`, `email`, and `position` are present. If a file is provided:
 
-The router setup in `main.go` follows the Gin best-practice pattern of grouping routes by their middleware requirements. Public routes (login, register) are registered directly on the root engine. Protected routes are registered on a `Group` that has `middleware.RequireAuth()` applied. Static file serving for CSS and uploads is also registered here.
+1. Checks file size (`MaxFileSize = 5 MB`)
+2. Detects MIME type via file extension and `http.DetectContentType` as a fallback
+3. Validates that the MIME type is in the allowed list (`image/jpeg`, `image/png`, `image/gif`, `image/webp`)
+4. Generates a UUID-based filename to prevent collisions and path traversal
+5. Saves to `./uploads/`
+
+Inserts the `Employee` row with `Status` defaulting to `"pending"`.
+
+### UpdateEmployeeStatus (`POST /employees/:id/status`)
+
+Accepts `status` and optional `hire_date` from the form body. Updates both fields in a single GORM `Updates` call using a map (not a struct, to allow zero-value updates). Redirects back to `/employees` on success.
+
+### DeleteEmployee (`DELETE /employees/:id`)
+
+Performs a GORM soft-delete (sets `DeletedAt`) on the employee matching the route `:id` parameter. Returns JSON on both success and error.
+
+### BadgeHandler (`GET /employees/:id/card`)
+
+Fetches a single employee record with `DB.First` and renders `id-card.html`. Returns a plain `404` string if the ID is not found.
+
+### GetEmployeesAPI (`GET /api/employees`)
+
+JSON-only endpoint. Supports `?search=` and `?status=` query parameters for filtering. Returns a JSON envelope with `employees` array and `total` count. Intended for the future REST API layer.
+
+---
+
+## `backend/handlers/departament.go`
+
+Handles all department operations.
+
+### DepartmentPageHandler (`GET /department`)
+
+Fetches all employees (to populate the manager `<select>` dropdown) and all departments in two separate queries, then renders `departments.html` with both datasets. This is a single-request page load — no AJAX.
+
+### CreatedepartmentHandler (`POST /department`)
+
+Reads `name`, `code`, and optional `boss_id` from the form. Validates that `name` and `code` are not empty. Parses `boss_id` as `uint64` (returns a 400 if the string is non-empty but invalid). Creates the `Department` row and redirects to `/department`.
+
+```go
+department := Department{
+    Name:   Name,
+    Code:   Code,
+    BossID: bossID,
+}
+DB.Create(&department)
+```
+
+### DepartmentHandler (paginated listing)
+
+Handles `GET /department` with pagination support (20 per page). Computes `totalPages` and passes pagination metadata to the template for next/prev link generation.
+
+---
+
+## Routing in `backend/cmd/server/main.go`
 
 ```go
 r := gin.Default()
-
-// Load HTML templates from the templates directory
+r.SetFuncMap(template.FuncMap{
+    "lower": strings.ToLower,
+    "add":   func(a, b int) int { return a + b },
+})
 r.LoadHTMLGlob("backend/templates/*")
-
-// Serve CSS files
-r.Static("/css", "./frontend/css")
-
-// Serve uploaded profile photos
-r.Static("/uploads", "./backend/uploads")
+r.Static("/css", "frontend/css")
+r.Static("/uploads", "./uploads")
 
 // Public routes
-r.GET("/login", handlers.LoginPage)
-r.POST("/login", handlers.Login(db))
-r.GET("/register", handlers.RegisterPage)
-r.POST("/register", handlers.Register(db))
+r.GET("/login",    ...)
+r.POST("/login",   handlers.Login)
+r.GET("/register", ...)
+r.POST("/register", handlers.Register)
+r.GET("/", func(c *gin.Context) { c.Redirect(302, "/login") })
 
-// Protected routes — RequireAuth middleware applied to the whole group
+// Protected routes
 protected := r.Group("/")
-protected.Use(middleware.RequireAuth())
+protected.Use(middleware.RequireAuth)
 {
-    protected.GET("/dashboard", handlers.Dashboard(db))
-    protected.GET("/employees", handlers.ListEmployees(db))
-    protected.POST("/employees", handlers.CreateEmployee(db))
-    protected.PUT("/employees/:id/status", handlers.UpdateStatus(db))
-    protected.GET("/employees/:id/card", handlers.EmployeeCard(db))
-    protected.POST("/logout", handlers.Logout)
+    protected.GET("/dashboard",               dashboardHandler)
+    protected.GET("/employees",               handlers.GetEmployees)
+    protected.POST("/employees",              handlers.CreateEmployee)
+    protected.POST("/employees/:id/status",   handlers.UpdateEmployeeStatus)
+    protected.DELETE("/employees/:id",        handlers.DeleteEmployee)
+    protected.GET("/department",              handlers.DepartmentPageHandler)
+    protected.POST("/department",             handlers.CreatedepartmentHandler)
+    protected.GET("/logout",                  handlers.Logout)
 }
-
-r.Run(":" + port)
 ```
 
-## Input Validation
+The `protected` group applies `middleware.RequireAuth` to every route inside it. Adding a new protected route is a matter of registering it inside the group — no per-handler auth checks needed.
 
-The `go-playground/validator/v10` library provides struct-tag-based validation. Fields marked `binding:"required"` are automatically checked by Gin's `ShouldBind` / `ShouldBindJSON` calls. Custom validations (like checking that `Status` is one of an allowed set) are implemented as validator functions registered at startup.
+## Template Functions
+
+Two custom template functions are registered at startup:
+
+| Function | Usage | Purpose |
+|---|---|---|
+| `lower` | `{{.Status \| lower}}` | Maps status strings to lowercase CSS class names |
+| `add` | `{{add .currentPage 1}}` | Offset arithmetic for pagination link hrefs |
 
 ## Error Handling Pattern
 
-Handlers follow a consistent pattern: validate input, attempt the operation, handle the error by re-rendering the form with a user-facing message rather than returning a raw HTTP error code. Raw 4xx/5xx responses are reserved for API endpoints (future REST layer). Template-rendered responses always give the user an actionable message.
+Handlers follow a consistent pattern: validate input → attempt the operation → on error, re-render the form with a user-facing message. Raw 4xx/5xx responses are used only for API endpoints. Template-rendered responses always give the user an actionable message.

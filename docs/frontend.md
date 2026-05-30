@@ -2,94 +2,132 @@
 
 ## Philosophy
 
-The frontend of HR Management Web is built entirely without CSS frameworks or JavaScript bundlers. Every style rule is handcrafted, every interaction is vanilla JavaScript, and the HTML is generated server-side by Go's `html/template` engine. This is a deliberate choice: no build pipeline, no `node_modules`, no transpilation step — just static files that Gin serves directly.
+The frontend of HR Management Web is built entirely without CSS frameworks or JavaScript bundlers. Every style rule is handcrafted, every interaction is vanilla JavaScript, and the HTML is generated server-side by Go's `html/template` engine. No build pipeline, no `node_modules`, no transpilation — just static files that Gin serves directly.
 
 This approach keeps the deployment artifact to a single Go binary plus a few directories, makes the CSS fully transparent and debuggable, and avoids the version churn and bundle bloat that come with framework dependencies.
 
+---
+
 ## File Organization
 
-Each page has its own dedicated CSS file in `frontend/css/`, plus a shared `style.css` that defines global design tokens (colors, typography, spacing scale). This mirrors the component-per-file pattern common in CSS module systems, but without requiring any tooling.
+Each page has its own dedicated CSS file in `frontend/css/`. This mirrors the component-per-file pattern common in CSS module systems, without requiring any tooling.
 
 ```
 frontend/css/
-├── style.css         ← Global tokens: colors, fonts, reset
-├── login.css         ← Login card layout and form styling
-├── register.css      ← Register page (mirrors login structure)
-├── dashboard.css     ← Sidebar navigation, KPI cards, layout grid
-├── employees.css     ← Table, card grid, search bar, status badges
-└── id-card.css       ← Candidate profile card, print-optimized
+├── style.css           ← Global reset
+├── login.css           ← Login card layout and form styling
+├── register.css        ← Register page (mirrors login structure)
+├── dashboard.css       ← Sidebar, KPI cards, employee grid
+├── employees.css       ← Table, form, search bar, status badges
+├── departments.css     ← Department cards, manager select, grid
+└── id-card.css         ← Candidate profile card, print-optimized
 ```
 
-Each template loads only its own CSS file plus the shared `style.css`, keeping the CSS payload minimal per page.
+---
 
 ## Design Tokens
 
-The global `style.css` establishes CSS custom properties (variables) that are used throughout all page-specific stylesheets:
+The shared visual language across all pages:
 
-```css
-:root {
-    --color-bg: #0f1117;          /* Dark page background */
-    --color-surface: #1a1d27;     /* Card and panel surface */
-    --color-surface-alt: #22253a; /* Slightly elevated surfaces */
-    --color-border: #2e3150;      /* Subtle border color */
-    --color-primary: #3d52a0;     /* Brand indigo — buttons, accents */
-    --color-primary-hover: #4a63bf;
-    --color-text: #e2e8f0;        /* Primary body text */
-    --color-text-muted: #8892b0;  /* Secondary text, labels */
-    --color-success: #4caf82;     /* Accepted status */
-    --color-danger: #e05555;      /* Rejected status */
-    --color-warning: #d4a843;     /* Pending status */
+| Token | Value | Usage |
+|---|---|---|
+| Page background | `#e2e8f0` | All page `body` backgrounds |
+| Surface (card) | `#ffffff` | Main content areas, form sections |
+| Surface alt | `#f8fafc` | Table headers, sidebar background |
+| Border | `#edf2f7` | Separators, card outlines |
+| Brand indigo | `#5c6bc0` / `#3f51b5` | Buttons, active nav, code badges |
+| Text primary | `#1e293b` | Headings, labels |
+| Text secondary | `#475569` | Nav items, form labels |
+| Text muted | `#64748b` | Subtitles, helper text |
+| Success | `#059669` | Contractors status |
+| Danger | `#dc2626` | Rejected status, delete buttons |
+| Warning | `#d97706` | Pending status |
+| Border radius (sm) | `10px` | Buttons |
+| Border radius (md) | `12px` | Inputs, nav items, badges |
+| Border radius (lg) | `20px` | Window cards |
 
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.35);
-}
-```
-
-The benefit of this centralization is that changing the brand color from indigo to another value requires editing a single line — all buttons, links, and highlights update simultaneously.
+---
 
 ## Page-by-Page Breakdown
 
-### Login Page (`login.css`)
+### Login & Register Pages
 
-The login page uses a light mode exception to the dark theme: a soft `#e8eaf0` gradient background is chosen to create a calm, trustworthy first impression without the darkness of the authenticated area. This is intentional — the login screen is the "outside" of the system, and the visual shift to dark on entry creates a clear threshold moment.
-
-The white card is centered using absolute positioning with a `transform: translate(-50%, -50%)` technique, ensuring it stays centered regardless of viewport height. `border-radius: 16px` and a layered `box-shadow` give it a lifted, floating feel. Input fields use `border-radius: 999px` (pill shape) with a transition on the border color on focus, providing gentle visual feedback. The CTA button uses the brand indigo (`#3d52a0`) with a hover darkening transition.
+Light mode pages (unlike the authenticated area): `#e2e8f0` gradient background, centered white card (`border-radius: 24px`, layered `box-shadow`). Input fields use `border-radius: 12px` with a transition on `border-color` and `box-shadow` on focus. The CTA button uses the brand indigo gradient with a `translateY(-2px)` hover effect. An entrance animation (`fadeInUp`) runs once on page load.
 
 ### Dashboard (`dashboard.css`)
 
-The dashboard layout is built on a two-column CSS Grid: a fixed-width sidebar (`240px`) and a fluid content area (`1fr`). This creates a classic application shell that is immediately recognizable to enterprise software users.
-
-The sidebar uses a dark surface (`var(--color-surface)`) with navigation items styled as full-width rows. The active item is indicated by a left border accent in brand indigo and a slightly lighter background, making the current location unmistakeable without heavy visual weight. Icon + label pairs use flexbox alignment to stay consistent regardless of label length.
-
-KPI cards (Accepted / Rejected / Pending counts) use the same surface background as the sidebar but with a 2px left border in the corresponding status color. The number is displayed in a large, heavy weight font with the label in muted text below it. This creates a scannable information hierarchy — the number is read first, the label second.
+Two-column layout: fixed-width sidebar (`260px`) and fluid main area (`flex: 1`). Sidebar uses `#f9fafb` with icon+label nav items — active item gets the indigo gradient. KPI cards use CSS Grid `auto-fit` with `minmax(180px, 1fr)` so the grid reflows gracefully on resize. Each card's number uses a gradient text color unique to that card (indigo, pink, amber, red) for fast scanning. The employee grid below uses `auto-fill` with `minmax(260px, 1fr)` cards that link to individual ID card views.
 
 ### Employees Page (`employees.css`)
 
-This page has the highest information density in the application. The table uses `border-collapse: collapse` with alternating row backgrounds for readability. Column widths are set with a mix of fixed values (for photo and status columns, which have predictable content) and `auto` (for name, position, email, which vary in length).
+Highest information density in the application. Table uses `border-collapse: collapse` with alternating hover backgrounds (`#f8fafc`). Status badges use `border-radius: 999px` (pill shape) with background and text color derived from the status value:
 
-Status badges are `display: inline-flex` chips with `border-radius: 999px`, a background color at 15% opacity of the status color, and the full status color for the text. This keeps them readable without overwhelming the table row. The color mapping is: `Accepted → var(--color-success)`, `Rejected → var(--color-danger)`, `Pending → var(--color-warning)`.
+| Status | Background | Text |
+|---|---|---|
+| `pending` | `#fef3c7` | `#d97706` |
+| `contractors` | `#d1fae5` | `#059669` |
+| `rejected` | `#fee2e2` | `#dc2626` |
 
-Profile photos are rendered as `40px × 40px` circles using `border-radius: 50%` and `object-fit: cover`, ensuring square photos don't appear stretched. When no photo exists, the template renders an SVG avatar placeholder at the same dimensions.
+Profile photos render as `48×48px` thumbnails with `border-radius: 12px` and `object-fit: cover`. The fallback is a purple gradient div with a `👤` emoji. The form section uses a gradient background (`#f8f9fc → #a8a8b0`) to visually separate it from the table below.
 
-The search bar sits in the page header row alongside the "Add Candidate" button. It uses a dark input field that blends with the surface while providing clear focus highlighting, keeping the header area clean and uncluttered.
+### Departments Page (`departments.css`)
+
+Mirrors the window/sidebar/main-content structure of the other pages. The creation form is a two-column CSS Grid; the manager select is styled with a custom dropdown arrow via `background-image` (SVG data URI). Department cards are rendered in a `repeat(auto-fill, minmax(300px, 1fr))` grid. Cards hover with `translateY(-2px)` and a stronger `box-shadow` and `border-color: #5c6bc0`.
 
 ### ID Card (`id-card.css`)
 
-The ID card template is optimized for both screen display and printing. `@media print` rules hide navigation and action buttons, expand the card to full page width, and use a white background to ensure the card prints cleanly on paper. This is a small but professional touch that makes the feature genuinely usable in real HR workflows.
+Print-optimized. `@media print` rules hide navigation and action buttons, expand the card to full page width, and use a white background. The card body is a flexbox row: `260×260px` photo on the left (with `border-radius: 24px`) and employee info on the right. On viewports below `850px`, the layout switches to column with centered content.
+
+---
 
 ## Template Engine
 
-Go's `html/template` package provides the rendering layer. Key properties of this engine that shape how the frontend works:
+Go's `html/template` package provides the rendering layer.
 
-**Auto-escaping** means any user-supplied string rendered in a template is automatically HTML-escaped. Outputting `{{ .employee.Name }}` where `Name` is `<script>alert(1)</script>` will render as the literal text, not execute the script. This is XSS protection by default, without any extra effort.
+**Auto-escaping** — any user-supplied string rendered with `{{ .field }}` is automatically HTML-escaped. XSS protection by default, no extra effort.
 
-**Template composition** is achieved with `{{ template "name" . }}` and `{{ define "name" }}` blocks. Shared layout elements (navigation, header, footer) are defined once and included in each page template, reducing duplication.
+**Template composition** — shared layout elements can be defined with `{{ define "name" }}` and included with `{{ template "name" . }}`. Currently each page is a standalone template, but partials can be extracted as the project grows.
 
-**Helper functions** can be registered with the Gin template engine for things like formatting dates, constructing pagination URLs with query parameters, or mapping status strings to CSS class names. These are registered in `main.go` via `r.SetFuncMap(template.FuncMap{...})` before `LoadHTMLGlob` is called.
+**Helper functions** — two custom functions are registered at startup in `main.go`:
+
+```go
+r.SetFuncMap(template.FuncMap{
+    "lower": strings.ToLower,
+    "add":   func(a, b int) int { return a + b },
+})
+```
+
+`lower` is used to map `Status` strings to lowercase CSS class names: `{{.Status | lower}}` → `"pending"`, `"contractors"`, `"rejected"`.
+
+`add` is used for pagination arithmetic: `{{add .currentPage 1}}` avoids needing a dedicated `nextPage` field in some contexts.
+
+---
 
 ## JavaScript
 
-JavaScript is kept minimal and purposeful. The primary use cases are status update requests (which use `fetch` to send `PUT /employees/:id/status` without a full page reload) and any UI toggling behavior (like opening an "Add Candidate" modal). There are no JavaScript frameworks, no build steps, and no significant client-side state management. This is an intentional constraint that keeps the application predictable and the behavior transparent.
+JavaScript is kept minimal and purposeful. The primary use case is the delete confirmation for candidates:
+
+```javascript
+function deleteEmployee(id) {
+    if (confirm('Are you sure you want to delete this candidate?')) {
+        fetch('/employees/' + id, { method: 'DELETE' })
+            .then(() => location.reload());
+    }
+}
+```
+
+There are no JavaScript frameworks, no build steps, and no client-side routing. All navigation is full-page requests. This is an intentional constraint that keeps the application predictable and behavior transparent.
+
+---
+
+## Responsiveness
+
+All pages include a media query at `@media (max-width: 900px)` (employees/departments) or `@media (max-width: 800px)` (dashboard) that:
+
+- Switches `window-body` from `flex-direction: row` to `column`
+- Expands the sidebar to full width and removes the right border
+- Switches the `nav-menu` from vertical column to horizontal `flex-wrap` row
+- Collapses the form grid to a single column
+- Reduces padding on `main-content`
+
+A secondary breakpoint at `768px` reduces table padding further and stacks action buttons vertically.

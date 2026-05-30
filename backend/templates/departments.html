@@ -78,10 +78,10 @@
                     <h2>Departments Created</h2>
                     <div class="departments-grid">
                         {{range .Departments}}
-                        <div class="department-card" >
+                        <div class="department-card" onclick="window.location.href='/department/{{.ID}}'">
                             <div class="department-header">
                                 <h3>{{.Name}}</h3>
-                                <span class="department-code">{{.Code}}</span>
+                                <span class="department-code"></span>{{.Code}}</span>
                             </div>
                             <div class="department-info">
                                 {{if .BossID}}

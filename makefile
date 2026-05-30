@@ -17,3 +17,12 @@ test-user:
 
 test-employee:
 	go run backend/cmd/seed_employee/main.go
+
+kill:
+	kill 2351 || true
+
+dev:
+	@echo " Killing process on port 8000..."
+	@kill -9 $$(lsof -t -i:8000) || true
+	@echo " Starting Air..."
+	air

@@ -28,6 +28,7 @@ type Employee struct {
 	Status   string `json:"status" gorm:"not null;default:'pending'"`
 	HireDate string `json:"hire_date"`
 	Photo    string `json:"photo"`
+	DepartmentID uint `json:"department_id"`
 }
 
 const (

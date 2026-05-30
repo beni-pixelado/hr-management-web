@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -16,37 +15,79 @@ type Department struct {
 	BossID uint   `gorm:"column:boss" json:"boss_id"`
 }
 
+func DepartmentsHandler(c *gin.Context) {
+	c.HTML(http.StatusOK, "departments.html", nil)
+}
+
 func DepartmentHandler(c *gin.Context) {
-	var department []Department
-
-	pageStr := c.DefaultQuery("page", "1")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
+	// Show details for a single department by ID
+	idParam := c.Param("id")
+	if idParam == "" {
+		c.Redirect(http.StatusFound, "/department")
+		return
 	}
 
-	limit := 20
-	offset := (page - 1) * limit
+	var dept Department
+	if err := DB.First(&dept, idParam).Error; err != nil {
+		c.String(http.StatusNotFound, "Departamento não encontrado")
+		return
+	}
 
-	var totalDepartments int64
-	DB.Model(&Department{}).Count(&totalDepartments)
+	// All employees for select (to add to department)
+	var allEmployees []Employee
+	if err := DB.Find(&allEmployees).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar funcionários"})
+		return
+	}
 
-	DB.
-		Limit(limit).
-		Offset(offset).
-		Find(&department)
+	// Employees that belong to this department (if DB has department_id column)
+	var members []Employee
+	if err := DB.Where("department_id = ?", dept.ID).Find(&members).Error; err != nil {
+		// If the column does not exist, members will remain empty — ignore error
+		members = []Employee{}
+	}
 
-	totalPages := int(math.Ceil(float64(totalDepartments) / float64(limit)))
-
-	c.HTML(http.StatusOK, "departments.html", gin.H{
-		"departments":      department,
-		"currentPage":      page,
-		"totalPages":       totalPages,
-		"totalDepartments": totalDepartments,
-		"prevPage":         page - 1,
-		"nextPage":         page + 1,
+	c.HTML(http.StatusOK, "department.html", gin.H{
+		"Department": dept,
+		"Employees":  allEmployees,
+		"Members":    members,
 	})
+}
+
+// AssignEmployeeToDepartment assigns an existing employee to a department
+func AssignEmployeeToDepartment(c *gin.Context) {
+	deptID := c.Param("id")
+	empID := c.PostForm("employee_id")
+
+	if empID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "employee_id is required"})
+		return
+	}
+
+	// Update employee's department_id column directly
+	if err := DB.Model(&Employee{}).Where("id = ?", empID).Update("department_id", deptID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atribuir funcionário ao departamento"})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/department/"+deptID)
+}
+
+// DeleteDepartment deletes a department and removes assignments from employees
+func DeleteDepartment(c *gin.Context) {
+	deptID := c.Param("id")
+
+	// Set department_id to NULL/0 for employees in this department
+	if err := DB.Model(&Employee{}).Where("department_id = ?", deptID).Update("department_id", 0).Error; err != nil {
+		// log but continue
+	}
+
+	if err := DB.Delete(&Department{}, deptID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar departamento"})
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/department")
 }
 
 func CreatedepartmentHandler(c *gin.Context) {

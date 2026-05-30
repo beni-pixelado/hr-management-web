@@ -1,9 +1,9 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"os"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/sessions"
@@ -42,7 +42,7 @@ func CreateSession(c *gin.Context, userID uint) error {
 		Path:     "/",
 		MaxAge:   60 * 60 * 24 * 7,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -61,17 +61,17 @@ func IsAuthenticated(c *gin.Context) (bool, uint) {
 	}
 
 	userIDValue, ok := session.Values["user_id"].(int)
-if !ok {
-	return false, 0
-}
+	if !ok {
+		return false, 0
+	}
 
-userID := uint(userIDValue)
+	userID := uint(userIDValue)
 	if !ok {
 		return false, 0
 	}
 
 	fmt.Printf("AUTH VALUE: %#v\n", session.Values["authenticated"])
-fmt.Printf("AUTH TYPE: %T\n", session.Values["authenticated"])
+	fmt.Printf("AUTH TYPE: %T\n", session.Values["authenticated"])
 
 	return true, userID
 
