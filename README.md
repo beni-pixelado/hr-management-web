@@ -4,7 +4,7 @@
 
 ### A production-minded Human Resources Management System built with Go, Gin, PostgreSQL and Gorilla Sessions
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
 [![Status](https://img.shields.io/badge/status-active-brightgreen.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
@@ -13,11 +13,11 @@
 
 <br/>
 
-> A full-stack HR candidate management platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — featuring department management, a modern dark UI, a powerful search engine, PostgreSQL via Neon, and session-based authentication.
+> A full-stack HR candidate management platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — featuring department management, a modern dark UI[...]
 
 <br/>
 
-[Overview](#-overview) · [Features](#-features) · [New UI](#-new-ui--design-system) · [Department Management](#-department-management) · [Search Engine](#-search-engine) · [Database](#-sqlite--postgresql-via-neon) · [Auth & Sessions](#-authentication--session-management) · [Tech Stack](#-tech-stack) · [Installation](#-installation) · [Roadmap](#-roadmap)
+[Overview](#-overview) · [Features](#-features) · [New UI](#-new-ui--design-system) · [Department Management](#-department-management) · [Search Engine](#-search-engine) · [Database](#-sqlite[...]
 
 </div>
 
@@ -49,9 +49,9 @@
 
 ## 🔍 Overview
 
-**HR Management Web** is a self-contained Human Resources platform built in Go, designed to manage candidate pipelines and organizational structure with clarity, efficiency, and scalability. The system evolved from a lightweight local prototype into a production-oriented application backed by a cloud PostgreSQL database, a session-based authentication system, a redesigned UI, a fast multi-field search engine, and a full department management module.
+**HR Management Web** is a self-contained Human Resources platform built in Go, designed to manage candidate pipelines and organizational structure with clarity, efficiency, and scalability. The s[...]
 
-The architecture follows a clean separation of concerns: the `backend/` layer handles HTTP routing and business logic through dedicated handlers, `internal/` packages encapsulate cross-cutting concerns like database connections, authentication, and middleware, and the `frontend/` layer is a server-rendered HTML/CSS interface rendered through Go's `html/template` engine via Gin.
+The architecture follows a clean separation of concerns: the `backend/` layer handles HTTP routing and business logic through dedicated handlers, `internal/` packages encapsulate cross-cutting con[...]
 
 The result is an application that is **portable, easy to extend, and ready for cloud deployment** — with zero client-side framework complexity and a Go binary as the single deployable artifact.
 
@@ -59,7 +59,7 @@ The result is an application that is **portable, easy to extend, and ready for c
 
 ## ✨ Features
 
-**Candidate Management** covers adding new candidates with name, job position, email, and optional profile photo upload. Photos are stored in `uploads/` and served statically, with an automatic fallback to a default avatar when no image is provided. The full candidate list is displayed in a sortable, readable table with pagination.
+**Candidate Management** covers adding new candidates with name, job position, email, and optional profile photo upload. Photos are stored in `uploads/` and served statically, with an automatic fa[...]
 
 **Department Management** allows HR teams to organize their workforce into departments. Each department has a name, a unique code, and an optional assigned manager. The module supports:
 - Creating new departments via a form with name, code, and manager selection
@@ -68,7 +68,7 @@ The result is an application that is **portable, easy to extend, and ready for c
 - Deleting departments
 - Adding and removing collaborators from departments
 
-**Status Pipeline** implements a three-state system (`Pending` → `Contractors` / `Rejected`) that is manually controlled by HR staff. Status changes are reflected immediately across both the table view and the dashboard metrics.
+**Status Pipeline** implements a three-state system (`Pending` → `Contractors` / `Rejected`) that is manually controlled by HR staff. Status changes are reflected immediately across both the tab[...]
 
 **Search Engine** provides multi-field, case-insensitive, server-side search across name, position, and email — with pagination preservation and URL-bookmarkable results.
 
@@ -86,11 +86,11 @@ One of the most significant improvements in v1.1 is a complete visual overhaul. 
 
 ### Design Philosophy
 
-The interface was designed around three principles: **clarity** (every element has a clear purpose and visual weight), **density** (HR tools are data-heavy — the layout maximizes information per screen without feeling cluttered), and **consistency** (reusable CSS classes and component patterns across every page).
+The interface was designed around three principles: **clarity** (every element has a clear purpose and visual weight), **density** (HR tools are data-heavy — the layout maximizes information per[...]
 
 ### Login Page
 
-The login screen features a soft light-gray gradient background (`#e2e8f0`) with a centered white card (`border-radius: 24px`, layered `box-shadow`). The form uses uppercase field labels, rounded input fields, and a bold indigo CTA button. A secondary "Sign up" link is styled as a ghost button to communicate its secondary priority.
+The login screen features a soft light-gray gradient background (`#e2e8f0`) with a centered white card (`border-radius: 24px`, layered `box-shadow`). The form uses uppercase field labels, rounded [...]
 
 ```
 Background: #e2e8f0 gradient  →  calm, enterprise feel
@@ -101,19 +101,19 @@ Ghost button: border-only      →  de-emphasized without hidden
 
 ### Dashboard
 
-The dashboard is the command center. It uses a sidebar navigation on the left with icon+label pairs and active-state highlighting. The main content area displays KPI cards (Contractors, Rejected, Pending counts) and an employee card grid that links directly to individual ID cards.
+The dashboard is the command center. It uses a sidebar navigation on the left with icon+label pairs and active-state highlighting. The main content area displays KPI cards (Contractors, Rejected,[...]
 
 ### Employees Page
 
-The employees page combines a filterable table with status badges color-coded as chips — green, red, and amber — providing instant visual feedback. Profile photos appear as rectangular thumbnails with a fallback emoji avatar when no image was uploaded.
+The employees page combines a filterable table with status badges color-coded as chips — green, red, and amber — providing instant visual feedback. Profile photos appear as rectangular thumbn[...]
 
 ### Departments Page
 
-The departments page presents created departments in a responsive card grid. Each card shows the department name, a colored code badge, and the assigned manager ID. The creation form includes a select dropdown populated with all existing employees for manager assignment.
+The departments page presents created departments in a responsive card grid. Each card shows the department name, a colored code badge, and the assigned manager ID. The creation form includes a s[...]
 
 ### Responsiveness
 
-All pages are built with relative units (`rem`, `%`, `vh`) and CSS media queries. The sidebar collapses to a top navigation bar on narrow viewports, and table views gracefully reduce to card-only layout below `768px`. No external CSS frameworks — every style is handcrafted in `frontend/css/`.
+All pages are built with relative units (`rem`, `%`, `vh`) and CSS media queries. The sidebar collapses to a top navigation bar on narrow viewports, and table views gracefully reduce to card-only[...]
 
 ---
 
@@ -123,7 +123,7 @@ The department module is one of the core v1.1 additions. It allows HR teams to c
 
 ### How It Works
 
-Departments are independent entities. Each has a `name`, a unique `code`, and an optional `boss_id` referencing an employee. The module is exposed at the `/department` route with both GET (list + form) and POST (create) handlers.
+Departments are independent entities. Each has a `name`, a unique `code`, and an optional `boss_id` referencing an employee. The module is exposed at the `/department` route with both GET (list +[...]
 
 ```go
 type Department struct {
@@ -136,7 +136,7 @@ type Department struct {
 
 ### Operations
 
-**Creating a Department** — The creation form accepts a name, code, and an optional manager selected from a dropdown of all existing employees. On submission, the handler validates required fields, parses the optional `boss_id`, and inserts the row.
+**Creating a Department** — The creation form accepts a name, code, and an optional manager selected from a dropdown of all existing employees. On submission, the handler validates required fie[...]
 
 ```go
 func CreatedepartmentHandler(c *gin.Context) {
@@ -151,11 +151,11 @@ func CreatedepartmentHandler(c *gin.Context) {
 
 **Deleting a Department** — Planned for v1.2. Will use `DELETE /department/:id`.
 
-**Adding / Removing Collaborators** — Planned for v1.2. Will introduce a join table (`department_employees`) linking the `departments` and `employees` tables many-to-many, with dedicated `POST /department/:id/members` and `DELETE /department/:id/members/:employee_id` routes.
+**Adding / Removing Collaborators** — Planned for v1.2. Will introduce a join table (`department_employees`) linking the `departments` and `employees` tables many-to-many, with dedicated `POST [...]
 
 ### The Departments Page
 
-The page is split into two sections: the **Add New Department** form at the top, and the **Departments Created** card grid below it. The manager select is dynamically populated from the `{{range .Employees}}` template block, ensuring it always reflects the current employee roster. The card grid adapts responsively using CSS Grid with `auto-fill` and `minmax(300px, 1fr)`.
+The page is split into two sections: the **Add New Department** form at the top, and the **Departments Created** card grid below it. The manager select is dynamically populated from the `{{range [...]
 
 ---
 
@@ -165,7 +165,7 @@ The search system allows HR staff to locate candidates instantly without paginat
 
 ### How It Works
 
-Search is implemented as a server-side query on the `GET /employees` route via a `q` parameter. The handler sanitizes the input and builds a parameterized SQL query using GORM's `Where` clause — the database performs the filtering.
+Search is implemented as a server-side query on the `GET /employees` route via a `q` parameter. The handler sanitizes the input and builds a parameterized SQL query using GORM's `Where` clause ✔[...]
 
 ```go
 query := DB.Model(&Employee{})
@@ -187,15 +187,15 @@ query.Offset(offset).Limit(limit).Find(&employees)
 
 ### Multi-field Search
 
-A single search term matches across three fields simultaneously: **full name**, **position**, and **email**. Typing `"eng"` surfaces candidates named `"Enrique"`, candidates with position `"Engineer"`, and candidates whose email contains `"eng"`. The `ILIKE` operator makes the search case-insensitive at the database level.
+A single search term matches across three fields simultaneously: **full name**, **position**, and **email**. Typing `"eng"` surfaces candidates named `"Enrique"`, candidates with position `"Engin[...]
 
 ### Frontend Integration
 
-The search input is a plain HTML `<form>` with `method="get"`. Submitting it produces a `GET /employees?q=...` request — no JavaScript required. The `value="{{ .search }}"` binding echoes the search term back into the input on the server-rendered response.
+The search input is a plain HTML `<form>` with `method="get"`. Submitting it produces a `GET /employees?q=...` request — no JavaScript required. The `value="{{ .search }}"` binding echoes the s[...]
 
 ### Pagination Integration
 
-Search integrates cleanly with pagination. Every page link preserves the `q` parameter, so navigating to page 2 of `"engineer"` results does not lose the search context. This is achieved by forwarding the `q` value into every pagination link's `href` in the template.
+Search integrates cleanly with pagination. Every page link preserves the `q` parameter, so navigating to page 2 of `"engineer"` results does not lose the search context. This is achieved by forwa[...]
 
 ### Security
 
@@ -209,15 +209,15 @@ This migration is one of the most important architectural decisions in the proje
 
 ### Why SQLite Was a Good Starting Point
 
-SQLite requires zero configuration, stores everything in a single file (`data/users.db`), and the Go driver works out of the box. For validating a data model and a UI, it's the right call. GORM's query API is the same for both drivers — the SQLite queries remained valid when the driver was swapped.
+SQLite requires zero configuration, stores everything in a single file (`data/users.db`), and the Go driver works out of the box. For validating a data model and a UI, it's the right call. GORM's[...]
 
 ### Why SQLite Becomes a Bottleneck
 
-SQLite has a single-writer constraint. In a web application with concurrent HTTP requests, writes queue behind each other. It also can't be accessed by more than one process simultaneously — ruling out horizontal scaling, separate migration runners, or cloud deployments where the filesystem is ephemeral.
+SQLite has a single-writer constraint. In a web application with concurrent HTTP requests, writes queue behind each other. It also can't be accessed by more than one process simultaneously — ru[...]
 
 ### Why PostgreSQL
 
-PostgreSQL supports true concurrent reads and writes via MVCC, full-text search operators (`ILIKE`, `tsvector`), `JSONB`, row-level locking, and a rich extension ecosystem. Its `ILIKE` operator was directly leveraged for the multi-field search.
+PostgreSQL supports true concurrent reads and writes via MVCC, full-text search operators (`ILIKE`, `tsvector`), `JSONB`, row-level locking, and a rich extension ecosystem. Its `ILIKE` operator w[...]
 
 ### Why Neon
 
@@ -264,7 +264,7 @@ Authentication is handled via **cookie-based sessions** using `gorilla/sessions`
 
 ### How Sessions Work
 
-When a user successfully logs in, the server creates a session entry, sets an authenticated flag and the user's ID inside the session store, and writes a `Set-Cookie` header. Every subsequent request carries that cookie, and the middleware validates it before allowing access to protected routes.
+When a user successfully logs in, the server creates a session entry, sets an authenticated flag and the user's ID inside the session store, and writes a `Set-Cookie` header. Every subsequent req[...]
 
 ```go
 // internal/auth/session.go
@@ -315,7 +315,7 @@ func RequireAuth(c *gin.Context) {
 
 ### Security Considerations
 
-The session cookie is HMAC-signed with the `SESSION_SECRET` key — tampering is detected and the session is invalidated. Passwords are stored hashed with `bcrypt` (`golang.org/x/crypto`). HTTPS in production (via Caddy or nginx) ensures the cookie is never transmitted in plaintext.
+The session cookie is HMAC-signed with the `SESSION_SECRET` key — tampering is detected and the session is invalidated. Passwords are stored hashed with `bcrypt` (`golang.org/x/crypto`). HTTPS [...]
 
 ---
 
@@ -370,30 +370,30 @@ The application follows a layered architecture with clear boundaries between con
 │          Routes · Middleware · Template Rendering         │
 └────────────────────────┬────────────────────────────────┘
                          │
-         ┌───────────────┼──────────────┐
-         │               │              │
-         ▼               ▼              ▼
-   ┌──────────┐   ┌──────────────┐  ┌──────────────┐
-   │  auth.go │   │ employee.go  │  │departament.go│
-   │ handler  │   │   handler    │  │   handler    │
-   └────┬─────┘   └──────┬───────┘  └──────┬───────┘
-        │                │                  │
-        └────────────────┼──────────────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │    internal/         │
-              │  db · auth · middle  │
-              └──────────┬───────────┘
-                         │
-                         ▼
-              ┌──────────────────────┐
-              │  Neon PostgreSQL     │
-              │  (cloud, serverless) │
-              └──────────────────────┘
+          ┌───────────────┼──────────────┐
+          │               │              │
+          ▼               ▼              ▼
+    ┌──────────┐   ┌──────────────┐  ┌──────────────┐
+    │  auth.go │   │ employee.go  │  │departament.go│
+    │ handler  │   │   handler    │  │   handler    │
+    └────┬─────┘   └──────┬───────┘  └──────┬───────┘
+         │                │                  │
+         └────────────────┼──────────────────┘
+                          │
+                          ▼
+               ┌──────────────────────┐
+               │    internal/         │
+               │  db · auth · middle  │
+               └──────────┬───────────┘
+                          │
+                          ▼
+               ┌──────────────────────┐
+               │  Neon PostgreSQL     │
+               │  (cloud, serverless) │
+               └──────────────────────┘
 ```
 
-The `internal/` packages (`auth`, `db`, `middleware`) are deliberately isolated from `backend/handlers/` — handlers call internal packages but not vice versa. The database connection, session logic, and auth gate can be tested and swapped independently.
+The `internal/` packages (`auth`, `db`, `middleware`) are deliberately isolated from `backend/handlers/` — handlers call internal packages but not vice versa. The database connection, session l[...]
 
 ---
 
@@ -593,7 +593,7 @@ go run ./backend/cmd/fix_sequences
 
 ## 🧪 Testing
 
-Integration tests validate the core application flows: candidate creation, status transitions, and authentication. The test suite uses `stretchr/testify` for assertions and `go.uber.org/mock` for mocking the database layer.
+Integration tests validate the core application flows: candidate creation, status transitions, and authentication. The test suite uses `stretchr/testify` for assertions and `go.uber.org/mock` for[...]
 
 ```bash
 make test
