@@ -2,6 +2,6 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go run ./backend/cmd/server"
+cmd = "sh -c 'pid=$(lsof -t -i:8000); if [ -n \"$pid\" ]; then echo \"Killing process on port 8000: $pid\"; kill -9 $pid || true; fi; go run ./backend/cmd/server'"
 include_ext = ["go", "html", "tmpl", "tpl"]
 exclude_dir = ["tmp", "vendor"]

@@ -3,36 +3,35 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"math"
 	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
-	"math"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	
 )
 
 var DB *gorm.DB
 
 type Employee struct {
-	ID       uint   `gorm:"primaryKey" json:"id"`
-	FullName string `json:"full_name" gorm:"not null"`
-	Email    string `json:"email" gorm:"not null"`
-	Position string `json:"position" gorm:"not null"`
-	Status   string `json:"status" gorm:"not null;default:'pending'"`
-	HireDate string `json:"hire_date"`
-	Photo    string `json:"photo"`
-	DepartmentID uint `json:"department_id"`
+	ID           uint   `gorm:"primaryKey" json:"id"`
+	FullName     string `json:"full_name" gorm:"not null"`
+	Email        string `json:"email" gorm:"not null"`
+	Position     string `json:"position" gorm:"not null"`
+	Status       string `json:"status" gorm:"not null;default:'pending'"`
+	HireDate     string `json:"hire_date"`
+	Photo        string `json:"photo"`
+	DepartmentID uint   `json:"department_id"`
 }
 
 const (
-	MaxFileSize = 5 * 1024 * 1024 
+	MaxFileSize = 5 * 1024 * 1024
 	uploadsDir  = "./uploads"
 )
 
@@ -131,13 +130,13 @@ func GetEmployees(c *gin.Context) {
 	totalPages := int(math.Ceil(float64(totalEmployees) / float64(limit)))
 
 	c.HTML(http.StatusOK, "employees.html", gin.H{
-	"employees":      employees,
-	"currentPage":    page,
-	"totalPages":     totalPages,
-	"totalEmployees": totalEmployees,
-	"prevPage":       page - 1,
-	"nextPage":       page + 1,
-})
+		"employees":      employees,
+		"currentPage":    page,
+		"totalPages":     totalPages,
+		"totalEmployees": totalEmployees,
+		"prevPage":       page - 1,
+		"nextPage":       page + 1,
+	})
 }
 
 func CreateEmployee(c *gin.Context) {
@@ -197,7 +196,7 @@ func UpdateEmployeeStatus(c *gin.Context) {
 	hireDate := c.PostForm("hire_date")
 
 	if newStatus == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status é obrigatório"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status is required"})
 		return
 	}
 
@@ -206,12 +205,10 @@ func UpdateEmployeeStatus(c *gin.Context) {
 		"status":    newStatus,
 		"hire_date": hireDate,
 	}).Error; err != nil {
-		log.Println("Erro ao atualizar funcionário:", err)
+		log.Println("Error updating employee:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar funcionário"})
 		return
 	}
-
-	log.Printf("Funcionário %s atualizado para status: %s\n", id, newStatus)
 
 	c.Redirect(http.StatusFound, "/employees")
 }
@@ -230,56 +227,66 @@ func DeleteEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Funcionário deletado com sucesso"})
 }
 
+// DeleteEmployeeForm aceita requisições POST vindas de formulários HTML
+// e redireciona de volta para a lista de funcionários após apagar.
+func DeleteEmployeeForm(c *gin.Context) {
+	id := c.Param("id")
+
+	if err := DB.Delete(&Employee{}, id).Error; err != nil {
+		log.Println("Erro ao deletar funcionário (form):", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
+		return
+	}
+
+	log.Printf("Funcionário %s deletado via form\n", id)
+
+	c.Redirect(http.StatusFound, "/employees")
+}
 
 func GetEmployeesAPI(c *gin.Context) {
-    
-    search := c.DefaultQuery("search", "")      
-    status := c.DefaultQuery("status", "all")   
-    
-    
-    query := DB.Model(&Employee{})
-    
-    
-    if search != "" {
-        query = query.Where("full_name LIKE ? OR email LIKE ?", 
-            "%"+search+"%", 
-            "%"+search+"%")
-    }
-    
-    
-    if status != "all" {
-        query = query.Where("status = ?", status)
-    }
-    
-    
-    var employees []Employee
-    if err := query.Find(&employees).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Erro ao buscar funcionários",
-        })
-        return
-    }
-    
-    
-    c.JSON(http.StatusOK, gin.H{
-        "employees": employees,
-        "total":     len(employees),
-    })
+
+	search := c.DefaultQuery("search", "")
+	status := c.DefaultQuery("status", "all")
+
+	query := DB.Model(&Employee{})
+
+	if search != "" {
+		query = query.Where("full_name LIKE ? OR email LIKE ?",
+			"%"+search+"%",
+			"%"+search+"%")
+	}
+
+	if status != "all" {
+		query = query.Where("status = ?", status)
+	}
+
+	var employees []Employee
+	if err := query.Find(&employees).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Erro ao buscar funcionários",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"employees": employees,
+		"total":     len(employees),
+	})
 }
 
 func BadgeHandler(c *gin.Context) {
-    id := c.Param("id")
+	id := c.Param("id")
 
-    var employee Employee
+	var employee Employee
 
-    if err := DB.First(&employee, id).Error; err != nil {
-        c.String(404, "Employee not found")
-        return
-    }
+	if err := DB.First(&employee, id).Error; err != nil {
+		c.String(404, "Employee not found")
+		return
+	}
 
-    c.HTML(200, "id-card.html", employee)
+	c.HTML(200, "id-card.html", employee)
 }
 
 func DepartamentHandler(c *gin.Context) {
-	
+
 }

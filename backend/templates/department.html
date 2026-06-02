@@ -30,6 +30,10 @@
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
                     </a>
+                    <a href="#" class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
                     <a href="/employees" class="nav-item">
                         <span class="nav-icon">👥</span>
                         <span>Manage Candidates</span>
@@ -84,8 +88,12 @@
                                     <strong>{{.FullName}}</strong><br>
                                     <small>{{.Position}} — {{.Email}}</small>
                                 </div>
-                                <div>
+                                <div style="display:flex;gap:8px;align-items:center">
                                     <a href="/badge/{{.ID}}" class="btn btn-primary">View Badge</a>
+                                    <form method="POST" action="/department/{{$.Department.ID}}/remove_employee" onsubmit="return confirm('Remove this employee from department?')">
+                                        <input type="hidden" name="employee_id" value="{{.ID}}">
+                                        <button type="submit" class="danger">Remove</button>
+                                    </form>
                                 </div>
                             </div>
                             {{end}}

@@ -12,10 +12,10 @@ import (
 )
 
 type User struct {
-	ID       uint   `gorm:"primaryKey"`
-	Username string `json:"username" gorm:"unique;not null"`
-	Password string `json:"password" gorm:"not null"`
-	Email    string `json:"email" gorm:"not null"`
+	ID         uint   `gorm:"primaryKey"`
+	Username   string `json:"username" gorm:"unique;not null"`
+	Password   string `json:"password"`
+	Email      string `json:"email" gorm:"unique;not null"`
 }
 
 func Register(c *gin.Context) {

@@ -111,10 +111,13 @@ func main() {
 		protected.POST("/employees", handlers.CreateEmployee)
 		protected.POST("/employees/:id/status", handlers.UpdateEmployeeStatus)
 		protected.DELETE("/employees/:id", handlers.DeleteEmployee)
+		// Suporte para formulários HTML (sem JS) que desejam deletar um funcionário
+		protected.POST("/employees/:id/delete", handlers.DeleteEmployeeForm)
 		protected.GET("/department", handlers.DepartmentPageHandler)
 		protected.POST("/department", handlers.CreatedepartmentHandler)
 		protected.GET("/department/:id", handlers.DepartmentHandler)
 		protected.POST("/department/:id/add_employee", handlers.AssignEmployeeToDepartment)
+		protected.POST("/department/:id/remove_employee", handlers.DeleteEmployeeFromDepartment)
 		protected.POST("/department/:id/delete", handlers.DeleteDepartment)
 		protected.GET("/logout", handlers.Logout)
 	}
