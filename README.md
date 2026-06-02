@@ -4,7 +4,7 @@
 
 ### A production-minded Human Resources Management System built with Go, Gin, PostgreSQL and Gorilla Sessions
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
+[![Latest Release](https://img.shields.io/github/v/release/beni-pixelado/hr-management-web?style=for-the-badge&logo=github&logoColor=blue)](https://github.com/beni-pixelado/hr-management-web/releases)
 [![Status](https://img.shields.io/badge/status-active-brightgreen.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
