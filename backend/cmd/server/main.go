@@ -27,7 +27,6 @@ func main() {
 	handlers.DB = database.DB
 	db := database.DB
 
-	// migrations
 	if err := db.AutoMigrate(&handlers.User{}); err != nil {
 		log.Fatal("User migration failed:", err)
 	}
@@ -49,8 +48,8 @@ func main() {
 	r.LoadHTMLGlob("backend/templates/*")
 	r.Static("/css", "frontend/css")
 	r.Static("/uploads", "./uploads")
+	r.Static("/js", "frontend/public/js/graphics.js")
 
-	// auth routes
 	r.GET("/login", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", nil)
 	})
@@ -64,7 +63,7 @@ func main() {
 		c.Redirect(http.StatusFound, "/login")
 	})
 
-	// debug route
+
 	r.GET("/debug/cookie", func(c *gin.Context) {
 		cookie, err := c.Cookie("hr_session")
 		if err != nil {

@@ -612,24 +612,24 @@ Tests run against an isolated test database instance. The `jordanlewis/gcassert`
 - [x] Session-based authentication with gorilla/sessions
 - [x] Department creation and listing module
 
-### v1.2 — Control (New Functions)
-- [ ] Department deletion
-- [ ] Add / remove collaborators from departments
-- [ ] Role-based access control (Admin, Recruiter, Viewer)
+### v3.0 — Control (New Functions)
+- [x] Department deletion
+- [x] Add / remove collaborators from departments
+- [ ] Overview
 - [ ] Account management (change password, deactivate)
 
-### v1.3 — Enhanced Data Model
+### 3.5 - multiple acess
+- [] Multiple views (manager, employee, and others)
+- [] Reports
+
+### v4.0 — Enhanced Data Model
 - [ ] Candidate notes and comments
 - [ ] Interview scheduling and date tracking
 - [ ] Department and team assignment
 - [ ] Audit trail for status change history
 
-### v2.0 — Architecture Evolution
-- [ ] Full REST API with OpenAPI/Swagger documentation
-- [ ] HTMX-powered frontend for partial page updates
-- [ ] Docker + Docker Compose for containerized deployment
-- [ ] CI/CD pipeline via GitHub Actions
-- [ ] GIN trigram index on search columns for `ILIKE` at scale
+### v5.0 — Architecture Evolution/big updates
+
 
 ---
 

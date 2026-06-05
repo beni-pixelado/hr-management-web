@@ -140,6 +140,11 @@
             color: #64748b;
         }
 
+        .overview-departments-pizza {
+            border: 1px solid #8f90929f;
+            border-radius: 12px;
+        }
+
         #pizza {
   width: 250px;
   height: 250px;
