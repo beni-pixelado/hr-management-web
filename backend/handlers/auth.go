@@ -91,5 +91,9 @@ func Login(c *gin.Context) {
 	log.Printf(" Sessão criada para UserID: %d | Username: %s", user.ID, user.Username)
 
 	// Redireciona para dashboard
-	c.Redirect(http.StatusFound, "/dashboard")
+	c.Redirect(http.StatusFound, "/dashboard")}
+
+func GetCurrentUserID(c *gin.Context) uint {
+	_, userID := auth.IsAuthenticated(c)
+	return uint(userID)
 }

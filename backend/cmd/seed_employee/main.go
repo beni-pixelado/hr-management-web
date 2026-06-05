@@ -22,16 +22,61 @@ func main() {
 	defer db.Close()
 
 	positions := []string{
-		"Backend Developer",
-		"Frontend Developer",
-		"DevOps Engineer",
-		"QA Engineer",
-		"Product Manager",
+		"Software Engineer",
+	"Frontend Developer",
+	"Backend Developer",
+	"Full Stack Developer",
+	"DevOps Engineer",
+	"Cloud Engineer",
+	"Data Scientist",
+	"Data Analyst",
+	"Machine Learning Engineer",
+	"AI Engineer",
+	"Cybersecurity Analyst",
+	"Security Engineer",
+	"Systems Administrator",
+	"Network Engineer",
+	"IT Support Specialist",
+	"Hardware Engineer",
+	"Embedded Systems Engineer",
+	"Firmware Engineer",
+	"Robotics Engineer",
+	"QA Engineer",
+	"Product Manager",
+	"Technical Product Manager",
+	"UI/UX Designer",
+	"Interaction Designer",
+	"Game Developer",
+	"Game Designer",
+	"AR/VR Developer",
+	"Blockchain Developer",
+	"Mobile App Developer",
+	"iOS Developer",
+	"Android Developer",
+	"Site Reliability Engineer",
+	"Marketing Manager",
+	"Digital Marketing Specialist",
+	"SEO Specialist",
+	"Content Marketer",
+	"Growth Hacker",
+	"Social Media Manager",
+	"Influencer Marketing Manager",
+	"Brand Strategist",
+	"Performance Marketing Specialist",
+	"PPC Specialist",
+	"Copywriter",
+	"Content Strategist",
+	"Email Marketing Specialist",
+	"Affiliate Marketing Manager",
+	"Media Buyer",
+	"Creative Director",
+	"Influencer",
+	"Technical Writer",
 	}
 
 	var employees []Employee
 
-	// gera 50 funcionários
+	
 	for i := 1; i <= 50; i++ {
 		pos := positions[i%len(positions)]
 

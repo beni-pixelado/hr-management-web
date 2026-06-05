@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overview</title>
+
+    <link rel="stylesheet" href="/css/overview.css">
+</head>
+
+<body>
+
+    <div class="window">
+
+        <div class="window-header">
+            <div class="window-title">departments</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/overview" class="nav-item active">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
+
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>Departments</span>
+                    </a>
+
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            
+            <main class="main-content">
+
+                <div class="overview-departments-pizza">
+                    <canvas id="pizzaChart"></canvas>
+                </div>
+
+            </main>
+
+        </div>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    
+    <script src="/js/overview.js"></script>
+
+</body>
+
+</html>

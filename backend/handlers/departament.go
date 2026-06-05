@@ -9,10 +9,14 @@ import (
 )
 
 type Department struct {
-	ID     uint   `gorm:"primaryKey" json:"id"`
+	ID uint `gorm:"primaryKey" json:"id"`
+
+	UserID uint `gorm:"not null;index" json:"user_id"`
+	User   User `gorm:"constraint:OnDelete:CASCADE;"`
+
 	Code   string `json:"code" gorm:"not null"`
-	Name   string `json:"Name" gorm:"not null"`
-	BossID uint   `gorm:"column:boss" json:"boss_id"`
+	Name   string `json:"name" gorm:"not null"`
+	BossID uint   `json:"boss_id"`
 }
 
 func DepartmentsHandler(c *gin.Context) {
@@ -20,7 +24,6 @@ func DepartmentsHandler(c *gin.Context) {
 }
 
 func DepartmentHandler(c *gin.Context) {
-
 	idParam := c.Param("id")
 	if idParam == "" {
 		c.Redirect(http.StatusFound, "/department")
@@ -28,7 +31,11 @@ func DepartmentHandler(c *gin.Context) {
 	}
 
 	var dept Department
-	if err := DB.First(&dept, idParam).Error; err != nil {
+
+	if err := DB.
+		Where("id = ? AND user_id = ?", idParam, GetCurrentUserID(c)).
+		First(&dept).Error; err != nil {
+
 		c.String(http.StatusNotFound, "Departamento não encontrado")
 		return
 	}
@@ -40,10 +47,7 @@ func DepartmentHandler(c *gin.Context) {
 	}
 
 	var members []Employee
-	if err := DB.Where("department_id = ?", dept.ID).Find(&members).Error; err != nil {
-
-		members = []Employee{}
-	}
+	_ = DB.Where("department_id = ?", dept.ID).Find(&members).Error
 
 	c.HTML(http.StatusOK, "department.html", gin.H{
 		"Department": dept,
@@ -61,7 +65,15 @@ func AssignEmployeeToDepartment(c *gin.Context) {
 		return
 	}
 
-	if err := DB.Model(&Employee{}).Where("id = ?", empID).Update("department_id", deptID).Error; err != nil {
+	if err := DB.
+		Model(&Employee{}).
+		Where(
+			"id = ? AND user_id = ?",
+			empID,
+			GetCurrentUserID(c),
+		).
+		Update("department_id", deptID).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atribuir funcionário ao departamento"})
 		return
 	}
@@ -72,11 +84,18 @@ func AssignEmployeeToDepartment(c *gin.Context) {
 func DeleteDepartment(c *gin.Context) {
 	deptID := c.Param("id")
 
-	if err := DB.Model(&Employee{}).Where("department_id = ?", deptID).Update("department_id", 0).Error; err != nil {
+	_ = DB.
+		Model(&Employee{}).
+		Where("department_id = ?", deptID).
+		Update("department_id", 0).Error
 
-	}
-
-	if err := DB.Delete(&Department{}, deptID).Error; err != nil {
+	if err := DB.
+		Where(
+			"id = ? AND user_id = ?",
+			deptID,
+			GetCurrentUserID(c),
+		).
+		Delete(&Department{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar departamento"})
 		return
 	}
@@ -85,11 +104,11 @@ func DeleteDepartment(c *gin.Context) {
 }
 
 func CreatedepartmentHandler(c *gin.Context) {
-	Code := c.PostForm("code")
-	Name := c.PostForm("name")
-	BossIDStr := c.PostForm("boss_id")
+	code := c.PostForm("code")
+	name := c.PostForm("name")
+	bossIDStr := c.PostForm("boss_id")
 
-	if Code == "" || Name == "" {
+	if code == "" || name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Campos obrigatórios: code e name",
 		})
@@ -97,37 +116,35 @@ func CreatedepartmentHandler(c *gin.Context) {
 	}
 
 	var bossID uint
-	if BossIDStr != "" {
-		bossIDUintParsed, err := strconv.ParseUint(BossIDStr, 10, 64)
+	if bossIDStr != "" {
+		parsed, err := strconv.ParseUint(bossIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "ID do chefe inválido",
 			})
 			return
 		}
-		bossID = uint(bossIDUintParsed)
+		bossID = uint(parsed)
 	}
 
 	department := Department{
-		Name:   Name,
-		Code:   Code,
+		UserID: GetCurrentUserID(c),
+		Name:   name,
+		Code:   code,
 		BossID: bossID,
 	}
 
-	log.Printf("Tentando criar departamento: %+v", department)
+	log.Printf("Criando departamento: %+v", department)
 
 	if err := DB.Create(&department).Error; err != nil {
 		log.Println("Erro ao criar departamento:", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":  "Erro ao salvar departamento no banco de dados",
+			"error":  "Erro ao salvar departamento",
 			"detail": err.Error(),
 		})
-
 		return
 	}
-
-	log.Printf("A new department has been added: %s", Name)
 
 	c.Redirect(http.StatusFound, "/department")
 }
@@ -136,14 +153,22 @@ func DepartmentPageHandler(c *gin.Context) {
 	var employees []Employee
 	var departments []Department
 
-	if err := DB.Find(&employees).Error; err != nil {
+	userID := GetCurrentUserID(c)
+
+	if err := DB.
+		Where("user_id = ?", userID).
+		Find(&employees).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Erro ao buscar funcionários",
 		})
 		return
 	}
 
-	if err := DB.Find(&departments).Error; err != nil {
+	if err := DB.
+		Where("user_id = ?", userID).
+		Find(&departments).Error; err != nil {
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Erro ao buscar departamentos",
 		})
@@ -169,8 +194,18 @@ func DeleteEmployeeFromDepartment(c *gin.Context) {
 		return
 	}
 
-	if err := DB.Model(&Employee{}).Where("id = ?", empID).Update("department_id", 0).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao remover funcionário do departamento"})
+	if err := DB.
+		Model(&Employee{}).
+		Where(
+			"id = ? AND user_id = ?",
+			empID,
+			GetCurrentUserID(c),
+		).
+		Update("department_id", 0).Error; err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Erro ao remover funcionário do departamento",
+		})
 		return
 	}
 

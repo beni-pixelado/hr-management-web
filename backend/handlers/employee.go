@@ -20,7 +20,11 @@ import (
 var DB *gorm.DB
 
 type Employee struct {
-	ID           uint   `gorm:"primaryKey" json:"id"`
+	ID uint `gorm:"primaryKey" json:"id"`
+
+	UserID uint `gorm:"not null;index"`
+	User   User `gorm:"constraint:OnDelete:CASCADE;"`
+
 	FullName     string `json:"full_name" gorm:"not null"`
 	Email        string `json:"email" gorm:"not null"`
 	Position     string `json:"position" gorm:"not null"`
@@ -120,9 +124,15 @@ func GetEmployees(c *gin.Context) {
 	offset := (page - 1) * limit
 
 	var totalEmployees int64
-	DB.Model(&Employee{}).Count(&totalEmployees)
+	userID := GetCurrentUserID(c)
 
 	DB.
+		Model(&Employee{}).
+		Where("user_id = ?", userID).
+		Count(&totalEmployees)
+
+	DB.
+		Where("user_id = ?", userID).
 		Limit(limit).
 		Offset(offset).
 		Find(&employees)
@@ -150,6 +160,7 @@ func CreateEmployee(c *gin.Context) {
 	}
 
 	employee := Employee{
+		UserID:   GetCurrentUserID(c),
 		FullName: fullName,
 		Email:    email,
 		Position: position,
@@ -201,7 +212,7 @@ func UpdateEmployeeStatus(c *gin.Context) {
 	}
 
 	var employee Employee
-	if err := DB.Model(&employee).Where("id = ?", id).Updates(map[string]interface{}{
+	if err := DB.Model(&employee).Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).Updates(map[string]interface{}{
 		"status":    newStatus,
 		"hire_date": hireDate,
 	}).Error; err != nil {
@@ -216,7 +227,9 @@ func UpdateEmployeeStatus(c *gin.Context) {
 func DeleteEmployee(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := DB.Delete(&Employee{}, id).Error; err != nil {
+	if err := DB.
+		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
+		Delete(&Employee{}).Error; err != nil {
 		log.Println("Erro ao deletar funcionário:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
 		return
@@ -227,12 +240,12 @@ func DeleteEmployee(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Funcionário deletado com sucesso"})
 }
 
-// DeleteEmployeeForm aceita requisições POST vindas de formulários HTML
-// e redireciona de volta para a lista de funcionários após apagar.
 func DeleteEmployeeForm(c *gin.Context) {
 	id := c.Param("id")
 
-	if err := DB.Delete(&Employee{}, id).Error; err != nil {
+	if err := DB.
+		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
+		Delete(&Employee{}).Error; err != nil {
 		log.Println("Erro ao deletar funcionário (form):", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
 		return
@@ -248,7 +261,9 @@ func GetEmployeesAPI(c *gin.Context) {
 	search := c.DefaultQuery("search", "")
 	status := c.DefaultQuery("status", "all")
 
-	query := DB.Model(&Employee{})
+	query := DB.
+		Model(&Employee{}).
+		Where("user_id = ?", GetCurrentUserID(c))
 
 	if search != "" {
 		query = query.Where("full_name LIKE ? OR email LIKE ?",
@@ -279,7 +294,9 @@ func BadgeHandler(c *gin.Context) {
 
 	var employee Employee
 
-	if err := DB.First(&employee, id).Error; err != nil {
+	if err := DB.
+		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
+		First(&employee).Error; err != nil {
 		c.String(404, "Employee not found")
 		return
 	}

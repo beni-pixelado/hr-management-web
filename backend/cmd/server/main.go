@@ -27,14 +27,15 @@ func main() {
 	handlers.DB = database.DB
 	db := database.DB
 
+	// migrations
 	if err := db.AutoMigrate(&handlers.User{}); err != nil {
-		log.Fatal("Migration failed:", err)
+		log.Fatal("User migration failed:", err)
 	}
 	if err := db.AutoMigrate(&handlers.Employee{}); err != nil {
-		log.Fatal("Employee migration failure:", err)
+		log.Fatal("Employee migration failed:", err)
 	}
 	if err := db.AutoMigrate(&handlers.Department{}); err != nil {
-		log.Fatal("Department migration failure:", err)
+		log.Fatal("Department migration failed:", err)
 	}
 
 	r := gin.Default()
@@ -49,13 +50,21 @@ func main() {
 	r.Static("/css", "frontend/css")
 	r.Static("/uploads", "./uploads")
 
-	r.GET("/login", func(c *gin.Context) { c.HTML(http.StatusOK, "login.html", nil) })
-	r.GET("/register", func(c *gin.Context) { c.HTML(http.StatusOK, "register.html", nil) })
+	// auth routes
+	r.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", nil)
+	})
+	r.GET("/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "register.html", nil)
+	})
 	r.POST("/register", handlers.Register)
 	r.POST("/login", handlers.Login)
 
-	r.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/login") })
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusFound, "/login")
+	})
 
+	// debug route
 	r.GET("/debug/cookie", func(c *gin.Context) {
 		cookie, err := c.Cookie("hr_session")
 		if err != nil {
@@ -64,7 +73,10 @@ func main() {
 		}
 
 		authenticated, userID := auth.IsAuthenticated(c)
-		c.String(http.StatusOK, fmt.Sprintf("Cookie: %s, Autenticado: %v, UserID: %d", cookie, authenticated, userID))
+		c.String(
+			http.StatusOK,
+			fmt.Sprintf("Cookie: %s, Autenticado: %v, UserID: %d", cookie, authenticated, userID),
+		)
 	})
 
 	protected := r.Group("/")
@@ -72,8 +84,16 @@ func main() {
 	{
 		protected.GET("/dashboard", func(c *gin.Context) {
 			search := strings.TrimSpace(c.DefaultQuery("search", ""))
+
+			userID := handlers.GetCurrentUserID(c)
+			if userID == 0 {
+				c.Redirect(http.StatusFound, "/login")
+				return
+			}
+
+			query := database.DB.Where("user_id = ?", userID)
+
 			var employees []handlers.Employee
-			query := db
 
 			if search != "" {
 				query = query.Where(
@@ -94,7 +114,11 @@ func main() {
 			}
 
 			var totalEmployees int64
-			database.DB.Model(&handlers.Employee{}).Count(&totalEmployees)
+			database.DB.
+				Model(&handlers.Employee{}).
+				Where("user_id = ?", userID).
+				Count(&totalEmployees)
+
 			query.Find(&employees)
 
 			c.HTML(http.StatusOK, "dashboard.html", gin.H{
@@ -104,6 +128,7 @@ func main() {
 				"showOff":        showOff,
 				"totalEmployees": totalEmployees,
 			})
+
 		})
 
 		protected.GET("/badge/:id", handlers.BadgeHandler)
@@ -111,14 +136,18 @@ func main() {
 		protected.POST("/employees", handlers.CreateEmployee)
 		protected.POST("/employees/:id/status", handlers.UpdateEmployeeStatus)
 		protected.DELETE("/employees/:id", handlers.DeleteEmployee)
-		// Suporte para formulários HTML (sem JS) que desejam deletar um funcionário
 		protected.POST("/employees/:id/delete", handlers.DeleteEmployeeForm)
+
 		protected.GET("/department", handlers.DepartmentPageHandler)
 		protected.POST("/department", handlers.CreatedepartmentHandler)
 		protected.GET("/department/:id", handlers.DepartmentHandler)
 		protected.POST("/department/:id/add_employee", handlers.AssignEmployeeToDepartment)
 		protected.POST("/department/:id/remove_employee", handlers.DeleteEmployeeFromDepartment)
 		protected.POST("/department/:id/delete", handlers.DeleteDepartment)
+
+		protected.GET("/overview", handlers.OverviewHandler)
+		protected.GET("/api/overview", handlers.OverviewDataHandler)
+
 		protected.GET("/logout", handlers.Logout)
 	}
 
