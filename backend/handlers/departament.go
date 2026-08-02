@@ -36,7 +36,7 @@ func DepartmentHandler(c *gin.Context) {
 		Where("id = ? AND user_id = ?", idParam, GetCurrentUserID(c)).
 		First(&dept).Error; err != nil {
 
-		c.String(http.StatusNotFound, "Departamento não encontrado")
+		c.String(http.StatusNotFound, "Department not found")
 		return
 	}
 
@@ -44,7 +44,7 @@ func DepartmentHandler(c *gin.Context) {
 	if err := DB.
 		Where("user_id = ?", GetCurrentUserID(c)).
 		Find(&allEmployees).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar funcionários"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching employees"})
 		return
 	}
 
@@ -76,7 +76,7 @@ func AssignEmployeeToDepartment(c *gin.Context) {
 		).
 		Update("department_id", deptID).Error; err != nil {
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atribuir funcionário ao departamento"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error assigning employee to department"})
 		return
 	}
 
@@ -98,7 +98,7 @@ func DeleteDepartment(c *gin.Context) {
 			GetCurrentUserID(c),
 		).
 		Delete(&Department{}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar departamento"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting department"})
 		return
 	}
 
@@ -112,7 +112,7 @@ func CreatedepartmentHandler(c *gin.Context) {
 
 	if code == "" || name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Campos obrigatórios: code e name",
+			"error": "Required fields: code and name",
 		})
 		return
 	}
@@ -122,7 +122,7 @@ func CreatedepartmentHandler(c *gin.Context) {
 		parsed, err := strconv.ParseUint(bossIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "ID do chefe inválido",
+				"error": "Invalid manager ID",
 			})
 			return
 		}
@@ -136,13 +136,13 @@ func CreatedepartmentHandler(c *gin.Context) {
 		BossID: bossID,
 	}
 
-	log.Printf("Criando departamento: %+v", department)
+	log.Printf("Creating department: %+v", department)
 
 	if err := DB.Create(&department).Error; err != nil {
-		log.Println("Erro ao criar departamento:", err)
+		log.Println("Error creating department:", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":  "Erro ao salvar departamento",
+			"error":  "Error saving department",
 			"detail": err.Error(),
 		})
 		return
@@ -162,7 +162,7 @@ func DepartmentPageHandler(c *gin.Context) {
 		Find(&employees).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Erro ao buscar funcionários",
+			"error": "Error fetching employees",
 		})
 		return
 	}
@@ -172,7 +172,7 @@ func DepartmentPageHandler(c *gin.Context) {
 		Find(&departments).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Erro ao buscar departamentos",
+			"error": "Error fetching departments",
 		})
 		return
 	}
@@ -206,7 +206,7 @@ func DeleteEmployeeFromDepartment(c *gin.Context) {
 		Update("department_id", 0).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Erro ao remover funcionário do departamento",
+			"error": "Error removing employee from department",
 		})
 		return
 	}

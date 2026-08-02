@@ -113,7 +113,7 @@
                                 <tr class="status-{{.Status | lower}}">
                                     <td class="photo-cell">
                                         {{if .Photo}}
-                                        <img src="{{.Photo}}" alt="Foto de {{.FullName}}" width="50" height="50" class="employee-thumbnail">
+                                        <img src="{{.Photo}}" alt="Photo of {{.FullName}}" width="50" height="50" class="employee-thumbnail">
                                         {{else}}
                                         <span class="no-photo">👤</span>
                                         {{end}}
@@ -144,7 +144,7 @@
                                         {{end}}
 
                                         <form method="POST" action="/employees/{{.ID}}/delete" style="display:inline;">
-                                            <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Tem certeza que deseja deletar este candidato?')">
+                                            <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this candidate?')">
                                                 Delete
                                             </button>
                                         </form>

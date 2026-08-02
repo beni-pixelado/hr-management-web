@@ -15,7 +15,7 @@ func InitSessionStore() {
 	secret := os.Getenv("SESSION_SECRET")
 
 	if secret == "" {
-		panic("SESSION_SECRET não definido")
+		panic("SESSION_SECRET not set")
 	}
 
 	SessionStore = sessions.NewCookieStore([]byte(secret))

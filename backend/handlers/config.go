@@ -91,7 +91,7 @@ func UpdateProfileHandler(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "account.html", gin.H{
 		"User":    user,
-		"success": "Perfil atualizado com sucesso!",
+		"success": "Profile updated successfully!",
 		"profile": true,
 	})
 }

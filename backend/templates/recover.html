@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Conta - HR Management System</title>
+    <title>Recover Account - HR Management System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
@@ -13,13 +13,13 @@
 
 <body>
     <div class="container">
-        <h1>Recuperar Conta</h1>
+        <h1>Recover Account</h1>
 
         <form action="/recover" method="POST">
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" placeholder="your@email.com" required>
 
-            <button type="submit">Enviar link de recuperação</button>
+            <button type="submit">Send recovery link</button>
         </form>
 
         {{if .error}}
@@ -31,7 +31,7 @@
         {{end}}
 
         <div class="page-link">
-            <a href="/login">Voltar para o login</a>
+            <a href="/login">Back to login</a>
         </div>
     </div>
 </body>

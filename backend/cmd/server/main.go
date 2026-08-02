@@ -20,7 +20,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("Erro ao carregar .env")
+		log.Println("Error loading .env")
 	}
 
 	database.Connect()
@@ -164,6 +164,6 @@ func main() {
 		port = "8000"
 	}
 
-	log.Printf("Servidor rodando na porta %s", port)
+	log.Printf("Server running on port %s", port)
 	r.Run(":" + port)
 }

@@ -12,15 +12,15 @@ import (
 func main() {
 	db, err := gorm.Open(sqlite.Open("/workspaces/hr-management-web/data/users.db"), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco de dados:", err)
+		log.Fatal("Error connecting to database:", err)
 	}
 
 	var users []handlers.User
 	if err := db.Find(&users).Error; err != nil {
-		log.Fatal("Erro ao buscar usuários:", err)
+		log.Fatal("Error fetching users:", err)
 	}
 
-	fmt.Printf("Total de usuários: %d\n", len(users))
+	fmt.Printf("Total users: %d\n", len(users))
 	fmt.Println("---")
 	for i, u := range users {
 		fmt.Printf("%d. %s (%s) - ID:%d\n", i+1, u.Username, u.Email, u.ID)

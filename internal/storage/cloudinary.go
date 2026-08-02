@@ -36,7 +36,7 @@ func Init() {
 	}
 
 	if err != nil {
-		fmt.Println("Erro ao inicializar Cloudinary:", err)
+		fmt.Println("Error initializing Cloudinary:", err)
 		return
 	}
 

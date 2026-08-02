@@ -31,36 +31,36 @@ func Register(c *gin.Context) {
 	email := c.PostForm("email")
 
 	if username == "" || password == "" || email == "" {
-		c.HTML(http.StatusBadRequest, "register.html", gin.H{"error": "Todos os campos são obrigatórios"})
+		c.HTML(http.StatusBadRequest, "register.html", gin.H{"error": "All fields are required"})
 		return
 	}
 
 	var existingUser User
 	if err := DB.Where("username = ?", username).First(&existingUser).Error; err == nil {
-		c.HTML(http.StatusBadRequest, "register.html", gin.H{"error": "Usuário já existe"})
+		c.HTML(http.StatusBadRequest, "register.html", gin.H{"error": "User already exists"})
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Erro ao hash senha:", err)
-		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Erro interno"})
+		log.Println("Error hashing password:", err)
+		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Internal error"})
 		return
 	}
 
 	newUser := User{Username: username, Password: string(hashedPassword), Email: email}
 	if err := DB.Create(&newUser).Error; err != nil {
-		log.Println("Erro ao criar usuário:", err)
-		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Erro ao criar conta"})
+		log.Println("Error creating user:", err)
+		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Error creating account"})
 		return
 	}
 
-	c.HTML(http.StatusOK, "login.html", gin.H{"success": "Conta criada com sucesso! Faça login."})
+	c.HTML(http.StatusOK, "login.html", gin.H{"success": "Account created successfully! Log in."})
 }
 
 func Logout(c *gin.Context) {
 	if err := auth.DestroySession(c); err != nil {
-		log.Println("Erro ao destruir sessão:", err)
+		log.Println("Error destroying session:", err)
 	}
 
 	c.Redirect(http.StatusFound, "/login")
@@ -72,24 +72,24 @@ func Login(c *gin.Context) {
 	password := c.PostForm("password")
 
 	if username == "" || email == "" || password == "" {
-		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Todos os campos são obrigatórios"})
+		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "All fields are required"})
 		return
 	}
 
 	var user User
 	if err := DB.Where("username = ? AND email = ?", username, email).First(&user).Error; err != nil {
-		c.HTML(http.StatusUnauthorized, "login.html", gin.H{"error": "Usuário, e-mail ou senha incorretos"})
+		c.HTML(http.StatusUnauthorized, "login.html", gin.H{"error": "Incorrect username, email or password"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		c.HTML(http.StatusUnauthorized, "login.html", gin.H{"error": "Usuário, e-mail ou senha incorretos"})
+		c.HTML(http.StatusUnauthorized, "login.html", gin.H{"error": "Incorrect username, email or password"})
 		return
 	}
 
 	if err := auth.CreateSession(c, user.ID); err != nil {
-		log.Println(" ERRO creating the session:", err)
-		c.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Erro interno ao criar sessão"})
+		log.Println("Error creating the session:", err)
+		c.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Internal error creating session"})
 		return
 	}
 
@@ -106,13 +106,13 @@ func GetCurrentUserID(c *gin.Context) uint {
 func RecoverAccount(c *gin.Context) {
 	email := c.PostForm("email")
 	if email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "E-mail é obrigatório"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
 		return
 	}
 
 	var user User
 	if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
@@ -122,8 +122,8 @@ func RecoverAccount(c *gin.Context) {
 	user.ResetExpires = time.Now().Add(1 * time.Hour).Unix()
 
 	if err := DB.Save(&user).Error; err != nil {
-		log.Println("Erro ao salvar token de reset:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno"})
+		log.Println("Error saving reset token:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
 		return
 	}
 
@@ -131,22 +131,22 @@ func RecoverAccount(c *gin.Context) {
 	params := &resend.SendEmailRequest{
 		From:    "HR Management <onboarding@resend.dev>",
 		To:      []string{user.Email},
-		Subject: "Recuperação de senha",
+		Subject: "Password recovery",
 		Html: fmt.Sprintf(`
-        <h2>Recuperação de senha</h2>
-        <p>Clique no botão abaixo:</p>
+        <h2>Password recovery</h2>
+        <p>Click the button below:</p>
 
         <a href="%s">
-            Recuperar senha
+            Reset password
         </a>
     `, resetLink),
 	}
 
 	if _, err := client.Emails.Send(params); err != nil {
-		log.Println("Erro ao enviar e-mail de recuperação:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao enviar e-mail de recuperação"})
+		log.Println("Error sending recovery email:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error sending recovery email"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "E-mail de recuperação enviado"})
+	c.JSON(http.StatusOK, gin.H{"message": "Recovery email sent"})
 }

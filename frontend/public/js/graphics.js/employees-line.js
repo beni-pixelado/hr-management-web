@@ -76,7 +76,7 @@ async function createLineChart(canvasId, endpoint, label) {
                                 if (!(date instanceof Date)) {
                                     return "";
                                 }
-                                return date.toLocaleDateString("pt-BR", {
+                                return date.toLocaleDateString("en-US", {
                                     day: "2-digit",
                                     month: "short"
                                 });

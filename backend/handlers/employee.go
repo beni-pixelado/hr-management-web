@@ -49,20 +49,20 @@ var allowedMimeTypes = []string{
 func saveUploadedImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
 
 	if file.Size > MaxFileSize {
-		return "", fmt.Errorf("arquivo muito grande (máximo 5MB, recebido %.2fMB)",
+		return "", fmt.Errorf("file too large (max 5MB, received %.2fMB)",
 			float64(file.Size)/(1024*1024))
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		return "", fmt.Errorf("erro ao ler arquivo: %v", err)
+		return "", fmt.Errorf("error reading file: %v", err)
 	}
 	defer src.Close()
 
 	buffer := make([]byte, 512)
 	n, err := src.Read(buffer)
 	if err != nil && err != io.EOF {
-		return "", fmt.Errorf("erro ao detectar tipo: %v", err)
+		return "", fmt.Errorf("error detecting file type: %v", err)
 	}
 
 	mimeType := http.DetectContentType(buffer[:n])
@@ -76,17 +76,17 @@ func saveUploadedImage(c *gin.Context, file *multipart.FileHeader) (string, erro
 	}
 
 	if !isAllowed {
-		return "", fmt.Errorf("tipo de arquivo não permitido: %s (aceitos: JPG, PNG, GIF, WebP)",
+		return "", fmt.Errorf("file type not allowed: %s (accepted: JPG, PNG, GIF, WebP)",
 			mimeType)
 	}
 
 	if _, err := src.Seek(0, io.SeekStart); err != nil {
-		return "", fmt.Errorf("erro ao preparar upload: %v", err)
+		return "", fmt.Errorf("error preparing upload: %v", err)
 	}
 
 	secureURL, err := storage.Upload(c.Request.Context(), src, uuid.New().String())
 	if err != nil {
-		return "", fmt.Errorf("erro no upload para o Cloudinary: %v", err)
+		return "", fmt.Errorf("error uploading to Cloudinary: %v", err)
 	}
 
 	return secureURL, nil
@@ -137,7 +137,7 @@ func CreateEmployee(c *gin.Context) {
 	position := c.PostForm("position")
 
 	if fullName == "" || email == "" || position == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Todos os campos (nome, email, cargo) são obrigatórios"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields (name, email, position) are required"})
 		return
 	}
 
@@ -154,31 +154,31 @@ func CreateEmployee(c *gin.Context) {
 
 		photoURL, saveErr := saveUploadedImage(c, file)
 		if saveErr != nil {
-			log.Printf("Erro ao salvar imagem: %v\n", saveErr)
+			log.Printf("Error saving image: %v\n", saveErr)
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": fmt.Sprintf("Erro no upload: %v", saveErr),
+				"error": fmt.Sprintf("Upload error: %v", saveErr),
 			})
 			return
 		}
 		employee.Photo = photoURL
 	} else if err != http.ErrMissingFile {
 
-		log.Printf("Erro ao processar upload: %v\n", err)
+		log.Printf("Error processing upload: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Erro ao processar o arquivo enviado",
+			"error": "Error processing the uploaded file",
 		})
 		return
 	}
 
 	if err := DB.Create(&employee).Error; err != nil {
-		log.Println("Erro ao criar funcionário:", err)
+		log.Println("Error creating employee:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Erro ao salvar funcionário no banco de dados",
+			"error": "Error saving employee to the database",
 		})
 		return
 	}
 
-	log.Printf("Novo funcionário adicionado: %s (Foto: %s)\n", fullName, employee.Photo)
+	log.Printf("New employee added: %s (Photo: %s)\n", fullName, employee.Photo)
 
 	c.Redirect(http.StatusFound, "/employees")
 }
@@ -199,7 +199,7 @@ func UpdateEmployeeStatus(c *gin.Context) {
 		"hire_date": hireDate,
 	}).Error; err != nil {
 		log.Println("Error updating employee:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao atualizar funcionário"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating employee"})
 		return
 	}
 
@@ -213,23 +213,23 @@ func DeleteEmployee(c *gin.Context) {
 	if err := DB.
 		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
 		First(&employee).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Funcionário não encontrado"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
 		return
 	}
 
 	if err := DB.Delete(&employee).Error; err != nil {
-		log.Println("Erro ao deletar funcionário:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
+		log.Println("Error deleting employee:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting employee"})
 		return
 	}
 
 	if err := storage.Destroy(c.Request.Context(), employee.Photo); err != nil {
-		log.Printf("Erro ao apagar foto no Cloudinary: %v\n", err)
+		log.Printf("Error deleting photo on Cloudinary: %v\n", err)
 	}
 
-	log.Printf("Funcionário %s deletado\n", id)
+	log.Printf("Employee %s deleted\n", id)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Funcionário deletado com sucesso"})
+	c.JSON(http.StatusOK, gin.H{"message": "Employee deleted successfully"})
 }
 
 func DeleteEmployeeForm(c *gin.Context) {
@@ -244,16 +244,16 @@ func DeleteEmployeeForm(c *gin.Context) {
 	}
 
 	if err := DB.Delete(&employee).Error; err != nil {
-		log.Println("Erro ao deletar funcionário (form):", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
+		log.Println("Error deleting employee (form):", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting employee"})
 		return
 	}
 
 	if err := storage.Destroy(c.Request.Context(), employee.Photo); err != nil {
-		log.Printf("Erro ao apagar foto no Cloudinary: %v\n", err)
+		log.Printf("Error deleting photo on Cloudinary: %v\n", err)
 	}
 
-	log.Printf("Funcionário %s deletado via form\n", id)
+	log.Printf("Employee %s deleted via form\n", id)
 
 	c.Redirect(http.StatusFound, "/employees")
 }
@@ -280,7 +280,7 @@ func GetEmployeesAPI(c *gin.Context) {
 	var employees []Employee
 	if err := query.Find(&employees).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Erro ao buscar funcionários",
+			"error": "Error fetching employees",
 		})
 		return
 	}
