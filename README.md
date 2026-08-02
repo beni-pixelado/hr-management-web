@@ -550,6 +550,62 @@ The application will be available at `http://localhost:8000`.
 
 ---
 
+## ☁️ Deploying to Render
+
+The repository ships with a `render.yaml` blueprint, so deployment is mostly dashboard-driven. The project uses **Neon PostgreSQL** for storage and **Cloudinary** for photos — both work out of the box on Render because the app reads configuration from environment variables.
+
+### 1. Push the blueprint
+
+Make sure `render.yaml`, the Go code, templates and `frontend/` are committed and pushed to GitHub. Render reads the repo directly.
+
+```bash
+git add render.yaml
+git commit -m "chore: add render.yaml blueprint"
+git push
+```
+
+### 2. Create the service on Render
+
+1. Go to <https://render.com> → **New** → **Blueprint** → select the `hr-management-web` repository.
+2. Render will detect the `hr-management-web` web service from `render.yaml` and ask for the environment variables.
+
+### 3. Set the environment variables
+
+Every variable listed in the blueprint must be filled in (they are marked as `sync: false`, so you enter them manually):
+
+| Variable | Where to get it |
+|---|---|
+| `DATABASE_URL` | Your Neon connection string (project → Dashboard → Connection details → pooled connection) |
+| `SESSION_SECRET` | Any long random string, e.g. `openssl rand -hex 32` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary dashboard |
+| `CLOUDINARY_API_KEY` | Cloudinary dashboard |
+| `CLOUDINARY_API_SECRET` | Cloudinary dashboard |
+| `RESEND_API_KEY` | Resend dashboard (used for password recovery e-mail) |
+| `RESEND_FROM` | Verified sender, e.g. `HR Management <onboarding@resend.dev>` |
+
+The port is injected by Render automatically via the `PORT` environment variable — the server already reads it (`os.Getenv("PORT")`).
+
+### 4. Deploy
+
+Click **Apply** / **Deploy**. Render builds the Go binary with `go build -o server ./backend/cmd/server` and starts it. You'll get a `https://your-service.onrender.com` URL.
+
+### First-time setup on production
+
+The tables are created automatically on startup via `AutoMigrate`. If you want sample data, run the seed commands locally against the same `DATABASE_URL`:
+
+```bash
+DATABASE_URL="postgres://..." go run ./backend/cmd/seed_users
+DATABASE_URL="postgres://..." go run ./backend/cmd/seed_employee
+```
+
+### Notes
+
+- The free Render tier spins down after ~15 minutes of inactivity; the first request after idle takes a few seconds to boot.
+- Sessions are cookie-based, photos go to Cloudinary, and the database is external (Neon) — so nothing stateful lives on Render's ephemeral disk. The `uploads/` and `data/` folders are not used in production.
+- Keep `PORT` out of your `.env`; Render sets it for you. The default `8000` is only a fallback for local development.
+
+---
+
 ## 🗺️ API Routes
 
 | Method | Route | Auth Required | Description |

@@ -11,6 +11,7 @@ import (
 	"hr-management-web/backend/handlers"
 	"hr-management-web/internal/auth"
 	"hr-management-web/internal/middleware"
+	"hr-management-web/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -22,6 +23,7 @@ func main() {
 	}
 
 	database.Connect()
+	storage.Init()
 	auth.InitSessionStore()
 
 	handlers.DB = database.DB
@@ -47,7 +49,6 @@ func main() {
 
 	r.LoadHTMLGlob("backend/templates/*")
 	r.Static("/css", "frontend/css")
-	r.Static("/uploads", "./uploads")
 	r.Static("/js", "frontend/public/js/graphics.js")
 
 	r.GET("/login", func(c *gin.Context) {
@@ -63,11 +64,10 @@ func main() {
 		c.Redirect(http.StatusFound, "/login")
 	})
 
-
 	r.GET("/debug/cookie", func(c *gin.Context) {
 		cookie, err := c.Cookie("hr_session")
 		if err != nil {
-			c.String(http.StatusOK, "COOKIE NÃO ENCONTRADO: %v", err)
+			c.String(http.StatusOK, "COOKIE NOT FOUNDED: %v", err)
 			return
 		}
 
@@ -145,7 +145,15 @@ func main() {
 		protected.POST("/department/:id/delete", handlers.DeleteDepartment)
 
 		protected.GET("/overview", handlers.OverviewHandler)
-		protected.GET("/api/overview", handlers.OverviewDataHandler)
+		protected.GET("/api/overview/departments", handlers.OverviewDataHandlerDepartments)
+		protected.GET("/api/overview/employees", handlers.OverviewDataHandlerEmployees)
+
+		protected.GET("/config", handlers.ConfigPageHandler)
+		protected.GET("/config/account", handlers.AccountPageHandler)
+		protected.POST("/config/account/profile", handlers.UpdateProfileHandler)
+		protected.POST("/config/account/password", handlers.ChangePasswordHandler)
+
+		protected.GET("/recuperateaccount", handlers.recuperateaccount)
 
 		protected.GET("/logout", handlers.Logout)
 	}
