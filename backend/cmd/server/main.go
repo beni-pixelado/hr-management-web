@@ -153,7 +153,7 @@ func main() {
 		protected.POST("/config/account/profile", handlers.UpdateProfileHandler)
 		protected.POST("/config/account/password", handlers.ChangePasswordHandler)
 
-		protected.GET("/recuperateaccount", handlers.recuperateaccount)
+		protected.GET("/recuperateaccount", handlers.RecoverAccount)
 
 		protected.GET("/logout", handlers.Logout)
 	}

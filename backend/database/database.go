@@ -11,7 +11,11 @@ import (
 var DB *gorm.DB
 
 func Connect() {
+	println("ENTROU NO CONNECT")
+
 	dsn := os.Getenv("DATABASE_URL")
+
+	println("DATABASE:", dsn)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
@@ -20,6 +24,4 @@ func Connect() {
 	}
 
 	DB = db
-
-	log.Println("bank has connected")
 }

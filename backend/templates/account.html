@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account | RH System</title>
+    <link rel="stylesheet" href="/css/config.css">
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div class="window-title">Account settings</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/overview" class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
+
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>Departments</span>
+                    </a>
+
+                    <a href="/config" class="nav-item active">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <a href="/config" class="back-link">← Back to configuration</a>
+
+                <div class="config-hero">
+                    <div class="eyebrow">Account settings</div>
+                    <h1>Account</h1>
+                    <p>Gerencie os dados da sua conta e altere sua senha.</p>
+                </div>
+
+                {{if .error}}
+                <div class="flash flash-error">{{.error}}</div>
+                {{end}}
+                {{if .success}}
+                <div class="flash flash-success">{{.success}}</div>
+                {{end}}
+
+                <div class="config-grid">
+                    <section class="config-card">
+                        <div class="card-header">
+                            <h2>Profile</h2>
+                            <p>Atualize as informações da sua conta.</p>
+                        </div>
+
+                        <form method="POST" action="/config/account/profile" class="config-form">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" value="{{.User.Username}}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" value="{{.User.Email}}" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save changes</button>
+                        </form>
+                    </section>
+
+                    <section class="config-card">
+                        <div class="card-header">
+                            <h2>Change password</h2>
+                            <p>Defina uma nova senha para sua conta.</p>
+                        </div>
+
+                        <form method="POST" action="/config/account/password" class="config-form">
+                            <div class="form-group">
+                                <label for="current_password">Current password</label>
+                                <input type="password" id="current_password" name="current_password" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="new_password">New password</label>
+                                <input type="password" id="new_password" name="new_password" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm new password</label>
+                                <input type="password" id="confirm_password" name="confirm_password" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Update password</button>
+                        </form>
+                    </section>
+                </div>
+
+                <section class="config-card account-card">
+                    <div class="card-header">
+                        <h2>Account</h2>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">User ID</span>
+                        <span class="account-value">{{.User.ID}}</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Username</span>
+                        <span class="account-value">{{.User.Username}}</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Email</span>
+                        <span class="account-value">{{.User.Email}}</span>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>

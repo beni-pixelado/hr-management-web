@@ -1,12 +1,21 @@
-<body>
+<!DOCTYPE html>
+<html lang="en">
 
-    <head>
-        <link rel="stylesheet" href="/css/employees.css">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Candidates | RH System</title>
+    <link rel="stylesheet" href="/css/employees.css">
+</head>
+
+<body>
     <div class="window">
-        <!-- Barra da janela -->
         <div class="window-header">
-            <div class="window-title">Management Dashboard</div>
+            <div>
+                <div class="eyebrow">HR Management</div>
+                <div class="window-title">Manage Candidates</div>
+            </div>
+            <div class="window-status">Candidate flow</div>
             <div class="window-controls">
                 <div class="window-control"></div>
                 <div class="window-control"></div>
@@ -15,7 +24,6 @@
         </div>
 
         <div class="window-body">
-            <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="nav-menu">
                     <a href="/dashboard" class="nav-item">
@@ -23,7 +31,7 @@
                         <span>Dashboard</span>
                     </a>
 
-                    <a href="#" class="nav-item">
+                    <a href="/overview" class="nav-item">
                         <span class="nav-icon">📈</span>
                         <span>Overview</span>
                     </a>
@@ -35,7 +43,7 @@
 
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
-                        <span>departaments</span>
+                        <span>Departments</span>
                     </a>
 
                     <a href="/" class="nav-item">
@@ -45,14 +53,16 @@
                 </div>
             </aside>
 
-            <!-- Conteúdo principal -->
             <main class="main-content">
-
-                <div class="form-section">
-                    <h2>Add New Candidate</h2>
+                <section class="form-section">
+                    <div class="section-intro">
+                        <div>
+                            <div class="eyebrow">Add new</div>
+                            <h2>Add New Candidate</h2>
+                        </div>
+                    </div>
 
                     <form method="POST" action="/employees" enctype="multipart/form-data" class="employee-form">
-
                         <div class="form-group">
                             <label for="full_name">Full Name:</label>
                             <input type="text" id="full_name" name="full_name" required placeholder="ethan smith">
@@ -69,25 +79,19 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="photo">
-                                Photo (optional - Max 5MB):
-                            </label>
-
+                            <label for="photo">Photo (optional - Max 5MB):</label>
                             <input type="file" id="photo" name="photo" accept="image/*">
-
-                            <small>
-                                Accepted formats: JPG, PNG, GIF, WebP
-                            </small>
+                            <small>Accepted formats: JPG, PNG, GIF, WebP</small>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            Add Candidate
-                        </button>
+                        <button type="submit" class="btn btn-primary">Add Candidate</button>
                     </form>
-                </div>
+                </section>
 
-                <div class="employees-section">
-                    <h2>List of Candidates</h2>
+                <section class="employees-section">
+                    <div class="employees-section-header">
+                        <h2>List of Candidates</h2>
+                    </div>
 
                     {{if .employees}}
                     <div class="employees-table-wrapper">
@@ -107,11 +111,9 @@
                             <tbody>
                                 {{range .employees}}
                                 <tr class="status-{{.Status | lower}}">
-
                                     <td class="photo-cell">
                                         {{if .Photo}}
-                                        <img src="/uploads/{{.Photo}}" alt="Foto de {{.FullName}}" width="50"
-                                            height="50" class="employee-thumbnail">
+                                        <img src="{{.Photo}}" alt="Foto de {{.FullName}}" width="50" height="50" class="employee-thumbnail">
                                         {{else}}
                                         <span class="no-photo">👤</span>
                                         {{end}}
@@ -122,36 +124,23 @@
                                     <td>{{.Position}}</td>
 
                                     <td>
-                                        <span class="status-badge status-{{.Status | lower}}">
-                                            {{.Status}}
-                                        </span>
+                                        <span class="status-badge status-{{.Status | lower}}">{{.Status}}</span>
                                     </td>
 
                                     <td>{{.HireDate}}</td>
 
                                     <td class="actions">
                                         {{if eq .Status "pending"}}
-
                                         <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
-
                                             <input type="hidden" name="status" value="contractors">
-
                                             <input type="date" name="hire_date" required>
-
-                                            <button type="submit" class="btn btn-success btn-sm">
-                                                Hire
-                                            </button>
+                                            <button type="submit" class="btn btn-success btn-sm">Hire</button>
                                         </form>
 
                                         <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
-
                                             <input type="hidden" name="status" value="rejected">
-
-                                            <button type="submit" class="btn btn-danger btn-sm">
-                                                Reject
-                                            </button>
+                                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                                         </form>
-
                                         {{end}}
 
                                         <form method="POST" action="/employees/{{.ID}}/delete" style="display:inline;">
@@ -160,7 +149,6 @@
                                             </button>
                                         </form>
                                     </td>
-
                                 </tr>
                                 {{end}}
                             </tbody>
@@ -168,33 +156,24 @@
                     </div>
 
                     <div class="pagination">
-
                         {{if gt .currentPage 1}}
-                        <a href="/employees?page={{.prevPage}}" class="page-btn">
-                            ← Previous
-                        </a>
+                        <a href="/employees?page={{.prevPage}}" class="page-btn">← Previous</a>
                         {{end}}
 
-                        <span class="page-info">
-                            Page {{.currentPage}} of {{.totalPages}}
-                        </span>
+                        <span class="page-info">Page {{.currentPage}} of {{.totalPages}}</span>
 
                         {{if lt .currentPage .totalPages}}
-                        <a href="/employees?page={{.nextPage}}" class="page-btn">
-                            Next →
-                        </a>
+                        <a href="/employees?page={{.nextPage}}" class="page-btn">Next →</a>
                         {{end}}
-
                     </div>
 
                     {{else}}
-
-                    <p class="no-employees">
-                        No candidates registered yet.
-                    </p>
-
+                    <p class="no-employees">No candidates registered yet.</p>
                     {{end}}
-                </div>
+                </section>
             </main>
         </div>
     </div>
+</body>
+
+</html>

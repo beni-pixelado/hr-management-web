@@ -41,13 +41,15 @@ func DepartmentHandler(c *gin.Context) {
 	}
 
 	var allEmployees []Employee
-	if err := DB.Find(&allEmployees).Error; err != nil {
+	if err := DB.
+		Where("user_id = ?", GetCurrentUserID(c)).
+		Find(&allEmployees).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao buscar funcionários"})
 		return
 	}
 
 	var members []Employee
-	_ = DB.Where("department_id = ?", dept.ID).Find(&members).Error
+	_ = DB.Where("department_id = ? AND user_id = ?", dept.ID, GetCurrentUserID(c)).Find(&members).Error
 
 	c.HTML(http.StatusOK, "department.html", gin.H{
 		"Department": dept,
@@ -86,7 +88,7 @@ func DeleteDepartment(c *gin.Context) {
 
 	_ = DB.
 		Model(&Employee{}).
-		Where("department_id = ?", deptID).
+		Where("department_id = ? AND user_id = ?", deptID, GetCurrentUserID(c)).
 		Update("department_id", 0).Error
 
 	if err := DB.

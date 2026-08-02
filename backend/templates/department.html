@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Departamento - {{.Department.Name}}</title>
+    <title>Department - {{.Department.Name}}</title>
     <link rel="stylesheet" href="/css/departments.css">
-    <style>
-        .member-list { margin-top: 16px; }
-        .member-item { display:flex; justify-content:space-between; align-items:center; padding:8px; border-radius:6px; background:#0f172a22; margin-bottom:8px }
-        .danger { background:#ef4444; color:white; border:none; padding:8px 12px; border-radius:6px }
-    </style>
 </head>
 
 <body>
     <div class="window">
         <div class="window-header">
-            <div class="window-title">department</div>
+            <div>
+                <div class="eyebrow">HR Management</div>
+                <div class="window-title">Departments</div>
+            </div>
+            <div class="window-status">Team view</div>
             <div class="window-controls">
                 <div class="window-control"></div>
                 <div class="window-control"></div>
@@ -40,7 +40,11 @@
                     </a>
                     <a href="/department" class="nav-item active">
                         <span class="nav-icon">🗂️</span>
-                        <span>departaments</span>
+                        <span>Departments</span>
+                    </a>
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
                     </a>
                     <a href="/" class="nav-item">
                         <span class="nav-icon">↩️</span>
@@ -50,14 +54,22 @@
             </aside>
 
             <main class="main-content">
-                <div class="form-section">
-                    <h2>{{.Department.Name}}</h2>
-                    <p><strong>Code:</strong> {{.Department.Code}}</p>
-                    {{if .Department.BossID}}
-                    <p><strong>Manager ID:</strong> {{.Department.BossID}}</p>
-                    {{else}}
-                    <p><strong>Manager:</strong> <span style="color:#94a3b8">No manager assigned</span></p>
-                    {{end}}
+                <section class="form-section">
+                    <div class="status-row">
+                        <div>
+                            <div class="eyebrow">Department details</div>
+                            <h2>{{.Department.Name}}</h2>
+                        </div>
+                        <span class="department-code">{{.Department.Code}}</span>
+                    </div>
+
+                    <div class="info-list">
+                        {{if .Department.BossID}}
+                        <p><strong>Manager ID:</strong> {{.Department.BossID}}</p>
+                        {{else}}
+                        <p><strong>Manager:</strong> <span class="muted">No manager assigned</span></p>
+                        {{end}}
+                    </div>
 
                     <form method="POST" action="/department/{{.Department.ID}}/add_employee" class="employee-form">
                         <div class="form-group-full">
@@ -73,13 +85,16 @@
                         <button type="submit" class="btn btn-primary">Add to Department</button>
                     </form>
 
-                    <form method="POST" action="/department/{{.Department.ID}}/delete" onsubmit="return confirm('Delete this department?')" style="margin-top:12px">
+                    <form method="POST" action="/department/{{.Department.ID}}/delete" onsubmit="return confirm('Delete this department?')" class="delete-form">
                         <button type="submit" class="danger">Delete Department</button>
                     </form>
-                </div>
+                </section>
 
-                <div class="departments-list-section">
-                    <h2>Members</h2>
+                <section class="departments-list-section">
+                    <div class="employees-section-header">
+                        <h2>Members</h2>
+                    </div>
+
                     <div class="member-list">
                         {{if .Members}}
                             {{range .Members}}
@@ -88,7 +103,7 @@
                                     <strong>{{.FullName}}</strong><br>
                                     <small>{{.Position}} — {{.Email}}</small>
                                 </div>
-                                <div style="display:flex;gap:8px;align-items:center">
+                                <div class="member-actions">
                                     <a href="/badge/{{.ID}}" class="btn btn-primary">View Badge</a>
                                     <form method="POST" action="/department/{{$.Department.ID}}/remove_employee" onsubmit="return confirm('Remove this employee from department?')">
                                         <input type="hidden" name="employee_id" value="{{.ID}}">
@@ -98,12 +113,13 @@
                             </div>
                             {{end}}
                         {{else}}
-                            <p style="color:#94a3b8">No employees assigned to this department.</p>
+                            <p class="empty-state">No employees assigned to this department.</p>
                         {{end}}
                     </div>
-                </div>
+                </section>
             </main>
         </div>
     </div>
 </body>
+
 </html>

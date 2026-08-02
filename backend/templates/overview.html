@@ -4,17 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Overview</title>
-
+    <title>Overview | RH System</title>
     <link rel="stylesheet" href="/css/overview.css">
 </head>
 
 <body>
-
     <div class="window">
-
         <div class="window-header">
-            <div class="window-title">departments</div>
+            <div class="window-title">Overview</div>
             <div class="window-controls">
                 <div class="window-control"></div>
                 <div class="window-control"></div>
@@ -23,7 +20,6 @@
         </div>
 
         <div class="window-body">
-
             <aside class="sidebar">
                 <div class="nav-menu">
                     <a href="/dashboard" class="nav-item">
@@ -46,6 +42,11 @@
                         <span>Departments</span>
                     </a>
 
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+
                     <a href="/" class="nav-item">
                         <span class="nav-icon">↩️</span>
                         <span>Return to login</span>
@@ -53,29 +54,28 @@
                 </div>
             </aside>
 
-            
             <main class="main-content">
+                <div class="overview-layout">
+                    <div class="overview-card overview-departments-pie">
+                        <p class="box-text">Candidates by Department</p>
+                        <canvas id="pieDepartments"></canvas>
+                    </div>
 
-                <div class="overview-departments-pizza">
-                    <canvas id="pizzaDepartments"></canvas>
+                    <div class="overview-card overview-employees-line">
+                        <p class="box-text">New candidates</p>
+                        <div class="chart-wrapper">
+                            <canvas id="lineEmployees"></canvas>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="overview-employees-bars">
-                    <canvas id="barsEmployees"></canvas>
-                </div>
-
             </main>
-
         </div>
     </div>
 
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    
-    <script src="/js/departments-pizza.js"></script>
-    <script src="/js/employees-bars.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="/js/departments-pie.js"></script>
+    <script src="/js/employees-line.js"></script>
 </body>
 
 </html>

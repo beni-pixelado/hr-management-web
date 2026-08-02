@@ -1,9 +1,14 @@
-
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/resend/resend-go/v2"
 
 	"hr-management-web/internal/auth"
 
@@ -12,10 +17,12 @@ import (
 )
 
 type User struct {
-	ID         uint   `gorm:"primaryKey"`
-	Username   string `json:"username" gorm:"unique;not null"`
-	Password   string `json:"password"`
-	Email      string `json:"email" gorm:"unique;not null"`
+	ID           uint   `gorm:"primaryKey"`
+	Username     string `json:"username" gorm:"unique;not null"`
+	Password     string `json:"password"`
+	Email        string `json:"email" gorm:"unique;not null"`
+	ResetToken   string `json:"reset_token,omitempty" gorm:"column:reset_token"`
+	ResetExpires int64  `json:"reset_expires,omitempty" gorm:"column:reset_expires"`
 }
 
 func Register(c *gin.Context) {
@@ -80,20 +87,66 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// Criação da sessão
 	if err := auth.CreateSession(c, user.ID); err != nil {
-		log.Println(" ERRO ao criar sessão:", err)
+		log.Println(" ERRO creating the session:", err)
 		c.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Erro interno ao criar sessão"})
 		return
 	}
 
-	// Log de sucesso
-	log.Printf(" Sessão criada para UserID: %d | Username: %s", user.ID, user.Username)
+	log.Printf(" Session has been created for UserID: %d | Username: %s", user.ID, user.Username)
 
-	// Redireciona para dashboard
-	c.Redirect(http.StatusFound, "/dashboard")}
+	c.Redirect(http.StatusFound, "/dashboard")
+}
 
 func GetCurrentUserID(c *gin.Context) uint {
 	_, userID := auth.IsAuthenticated(c)
 	return uint(userID)
+}
+
+func RecoverAccount(c *gin.Context) {
+	email := c.PostForm("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "E-mail é obrigatório"})
+		return
+	}
+
+	var user User
+	if err := DB.Where("email = ?", email).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
+		return
+	}
+
+	token := uuid.NewString()
+	resetLink := fmt.Sprintf("https://meusite.com/reset-password?token=%s", token)
+	user.ResetToken = token
+	user.ResetExpires = time.Now().Add(1 * time.Hour).Unix()
+
+	if err := DB.Save(&user).Error; err != nil {
+		log.Println("Erro ao salvar token de reset:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno"})
+		return
+	}
+
+	client := resend.NewClient(os.Getenv("RESEND_API_KEY"))
+	params := &resend.SendEmailRequest{
+		From:    "HR Management <onboarding@resend.dev>",
+		To:      []string{user.Email},
+		Subject: "Recuperação de senha",
+		Html: fmt.Sprintf(`
+        <h2>Recuperação de senha</h2>
+        <p>Clique no botão abaixo:</p>
+
+        <a href="%s">
+            Recuperar senha
+        </a>
+    `, resetLink),
+	}
+
+	if _, err := client.Emails.Send(params); err != nil {
+		log.Println("Erro ao enviar e-mail de recuperação:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao enviar e-mail de recuperação"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "E-mail de recuperação enviado"})
 }

@@ -1,4 +1,3 @@
-
 package middleware
 
 import (
@@ -9,8 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-
 func RequireAuth(c *gin.Context) {
 	authenticated, userID := auth.IsAuthenticated(c)
 
@@ -20,13 +17,10 @@ func RequireAuth(c *gin.Context) {
 		return
 	}
 
-	
 	c.Set("user_id", userID)
 
 	c.Next()
 }
-
-
 
 func RedirectIfAuthenticated(c *gin.Context) {
 	authenticated, _ := auth.IsAuthenticated(c)

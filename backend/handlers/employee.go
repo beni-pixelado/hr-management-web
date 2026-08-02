@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"math"
-	"mime"
 	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"hr-management-web/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -20,7 +21,9 @@ import (
 var DB *gorm.DB
 
 type Employee struct {
-	ID uint `gorm:"primaryKey" json:"id"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 
 	UserID uint `gorm:"not null;index"`
 	User   User `gorm:"constraint:OnDelete:CASCADE;"`
@@ -34,10 +37,7 @@ type Employee struct {
 	DepartmentID uint   `json:"department_id"`
 }
 
-const (
-	MaxFileSize = 5 * 1024 * 1024
-	uploadsDir  = "./uploads"
-)
+const MaxFileSize = 5 * 1024 * 1024
 
 var allowedMimeTypes = []string{
 	"image/jpeg",
@@ -53,23 +53,19 @@ func saveUploadedImage(c *gin.Context, file *multipart.FileHeader) (string, erro
 			float64(file.Size)/(1024*1024))
 	}
 
-	ext := filepath.Ext(file.Filename)
-	mimeType := mime.TypeByExtension(ext)
-
-	if mimeType == "" {
-
-		src, err := file.Open()
-		if err != nil {
-			return "", fmt.Errorf("erro ao ler arquivo: %v", err)
-		}
-		defer src.Close()
-
-		buffer := make([]byte, 512)
-		if _, err := src.Read(buffer); err != nil {
-			return "", fmt.Errorf("erro ao detectar tipo: %v", err)
-		}
-		mimeType = http.DetectContentType(buffer)
+	src, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("erro ao ler arquivo: %v", err)
 	}
+	defer src.Close()
+
+	buffer := make([]byte, 512)
+	n, err := src.Read(buffer)
+	if err != nil && err != io.EOF {
+		return "", fmt.Errorf("erro ao detectar tipo: %v", err)
+	}
+
+	mimeType := http.DetectContentType(buffer[:n])
 
 	isAllowed := false
 	for _, allowed := range allowedMimeTypes {
@@ -84,30 +80,16 @@ func saveUploadedImage(c *gin.Context, file *multipart.FileHeader) (string, erro
 			mimeType)
 	}
 
-	if ext == "" {
-
-		extMap := map[string]string{
-			"image/jpeg": ".jpg",
-			"image/png":  ".png",
-			"image/gif":  ".gif",
-			"image/webp": ".webp",
-		}
-		ext = extMap[mimeType]
+	if _, err := src.Seek(0, io.SeekStart); err != nil {
+		return "", fmt.Errorf("erro ao preparar upload: %v", err)
 	}
 
-	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
-		return "", fmt.Errorf("erro ao criar pasta de uploads: %v", err)
+	secureURL, err := storage.Upload(c.Request.Context(), src, uuid.New().String())
+	if err != nil {
+		return "", fmt.Errorf("erro no upload para o Cloudinary: %v", err)
 	}
 
-	uniqueFilename := uuid.New().String() + ext
-
-	filePath := filepath.Join(uploadsDir, uniqueFilename)
-
-	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		return "", fmt.Errorf("erro ao salvar arquivo: %v", err)
-	}
-
-	return uniqueFilename, nil
+	return secureURL, nil
 }
 
 func GetEmployees(c *gin.Context) {
@@ -170,7 +152,7 @@ func CreateEmployee(c *gin.Context) {
 	file, err := c.FormFile("photo")
 	if err == nil && file != nil {
 
-		uniqueFilename, saveErr := saveUploadedImage(c, file)
+		photoURL, saveErr := saveUploadedImage(c, file)
 		if saveErr != nil {
 			log.Printf("Erro ao salvar imagem: %v\n", saveErr)
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -178,7 +160,7 @@ func CreateEmployee(c *gin.Context) {
 			})
 			return
 		}
-		employee.Photo = uniqueFilename
+		employee.Photo = photoURL
 	} else if err != http.ErrMissingFile {
 
 		log.Printf("Erro ao processar upload: %v\n", err)
@@ -227,12 +209,22 @@ func UpdateEmployeeStatus(c *gin.Context) {
 func DeleteEmployee(c *gin.Context) {
 	id := c.Param("id")
 
+	var employee Employee
 	if err := DB.
 		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
-		Delete(&Employee{}).Error; err != nil {
+		First(&employee).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Funcionário não encontrado"})
+		return
+	}
+
+	if err := DB.Delete(&employee).Error; err != nil {
 		log.Println("Erro ao deletar funcionário:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
 		return
+	}
+
+	if err := storage.Destroy(c.Request.Context(), employee.Photo); err != nil {
+		log.Printf("Erro ao apagar foto no Cloudinary: %v\n", err)
 	}
 
 	log.Printf("Funcionário %s deletado\n", id)
@@ -243,12 +235,22 @@ func DeleteEmployee(c *gin.Context) {
 func DeleteEmployeeForm(c *gin.Context) {
 	id := c.Param("id")
 
+	var employee Employee
 	if err := DB.
 		Where("id = ? AND user_id = ?", id, GetCurrentUserID(c)).
-		Delete(&Employee{}).Error; err != nil {
+		First(&employee).Error; err != nil {
+		c.Redirect(http.StatusFound, "/employees")
+		return
+	}
+
+	if err := DB.Delete(&employee).Error; err != nil {
 		log.Println("Erro ao deletar funcionário (form):", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao deletar funcionário"})
 		return
+	}
+
+	if err := storage.Destroy(c.Request.Context(), employee.Photo); err != nil {
+		log.Printf("Erro ao apagar foto no Cloudinary: %v\n", err)
 	}
 
 	log.Printf("Funcionário %s deletado via form\n", id)
@@ -302,8 +304,4 @@ func BadgeHandler(c *gin.Context) {
 	}
 
 	c.HTML(200, "id-card.html", employee)
-}
-
-func DepartamentHandler(c *gin.Context) {
-
 }

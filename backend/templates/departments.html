@@ -38,6 +38,10 @@
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
                     </a>
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
                     <a href="/" class="nav-item">
                         <span class="nav-icon">↩️</span>
                         <span>Return to login</span>
@@ -85,13 +89,13 @@
                         <div class="department-card" onclick="window.location.href='/department/{{.ID}}'">
                             <div class="department-header">
                                 <h3>{{.Name}}</h3>
-                                <span class="department-code"></span>{{.Code}}</span>
+                                <span class="department-code">{{.Code}}</span>
                             </div>
                             <div class="department-info">
                                 {{if .BossID}}
                                 <p class="info-label">Manager ID: <span>{{.BossID}}</span></p>
                                 {{else}}
-                                <p class="info-label">Manager: <span style="color: #94a3b8;">No manager assigned</span></p>
+                                <p class="info-label">Manager: <span>No manager assigned</span></p>
                                 {{end}}
                             </div>
                         </div>

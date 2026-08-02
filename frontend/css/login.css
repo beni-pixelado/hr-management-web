@@ -185,6 +185,10 @@ button[type="submit"]:active {
     border: 1px solid #cbd5e1;
 }
 
+.page-link .recover-link {
+    margin-left: 8px;
+}
+
 .page-link a:hover {
     background: #f8f9fc;
     border-color: #5c6bc0;

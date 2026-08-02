@@ -12,9 +12,12 @@
 
 <body>
     <div class="window">
-        <!-- Barra da janela (estilo separado) -->
         <div class="window-header">
-            <div class="window-title">Management Dashboard</div>
+            <div>
+                <div class="eyebrow">HR Management</div>
+                <div class="window-title">Management Dashboard</div>
+            </div>
+            <div class="window-status">Live snapshot</div>
             <div class="window-controls">
                 <div class="window-control"></div>
                 <div class="window-control"></div>
@@ -23,7 +26,6 @@
         </div>
 
         <div class="window-body">
-            <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="nav-menu">
                     <a href="#" class="nav-item active">
@@ -40,40 +42,67 @@
                     </a>
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
-                        <span>departaments</span>
+                        <span>Departments</span>
+                    </a>
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
                     </a>
                     <a href="/" class="nav-item">
                         <span class="nav-icon">↩️</span>
                         <span>Return to login</span>
                     </a>
-
                 </div>
             </aside>
 
-            <!-- Conteúdo principal -->
             <main class="main-content">
-                <!-- Search bar -->
+                <section class="dashboard-hero">
+                    <div class="hero-copy">
+                        <div class="eyebrow">Overview snapshot</div>
+                        <h1>Monitor your talent pipeline with clarity and style.</h1>
+                        <p>Este painel foi reorganizado para destacar a visão geral do processo, mantendo a mesma essência operacional do sistema.</p>
+                    </div>
+
+                    <div class="hero-summary">
+                        <div class="summary-card">
+                            <strong>{{.totalEmployees}}</strong>
+                            <span>Total candidates</span>
+                        </div>
+                        {{$total := len .employees}}
+                        {{$contractors := 0}}
+                        {{$pending := 0}}
+                        {{$rejected := 0}}
+                        {{range .employees}}
+                        {{if eq .Status "contractors"}}{{$contractors = add $contractors 1}}{{end}}
+                        {{if eq .Status "pending"}}{{$pending = add $pending 1}}{{end}}
+                        {{if eq .Status "rejected"}}{{$rejected = add $rejected 1}}{{end}}
+                        {{end}}
+                        <div class="summary-card">
+                            <strong>{{$contractors}}</strong>
+                            <span>Contractors</span>
+                        </div>
+                        <div class="summary-card">
+                            <strong>{{$pending}}</strong>
+                            <span>Pending</span>
+                        </div>
+                        <div class="summary-card">
+                            <strong>{{$rejected}}</strong>
+                            <span>Rejected</span>
+                        </div>
+                    </div>
+                </section>
+
                 <div class="search-bar">
                     <form method="GET" action="/dashboard">
                         <input type="text" name="search" value="{{.search}}" placeholder="Search by name, email...">
                     </form>
                 </div>
 
-                <!-- Stats cards -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <h3>Total Candidates</h3>
                         <p class="number">{{.totalEmployees}}</p>
                     </div>
-                    {{$total := len .employees}}
-                    {{$contractors := 0}}
-                    {{$pending := 0}}
-                    {{$rejected := 0}}
-                    {{range .employees}}
-                    {{if eq .Status "contractors"}}{{$contractors = add $contractors 1}}{{end}}
-                    {{if eq .Status "pending"}}{{$pending = add $pending 1}}{{end}}
-                    {{if eq .Status "rejected"}}{{$rejected = add $rejected 1}}{{end}}
-                    {{end}}
                     <div class="stat-card">
                         <h3>Contractors</h3>
                         <p class="number">{{$contractors}}</p>
@@ -88,47 +117,50 @@
                     </div>
                 </div>
 
-                <!-- All Employees section -->
-                <h2 class="section-title">All Employees</h2>
-                <div class="sidebar-footer">
-                    {{if .showAll}}
-                    <a href="/dashboard?Off=false" class="show-all-btn">
-                        see all candidates🟢
-                    </a>
-                    {{else}}
-                    <a href="/dashboard?all=true" class="show-all-btn">
-                        see all candidates🔴
-                    </a>
-                    {{end}}
-                    </a>
-                </div>
-                {{if .employees}}
-                <div class="employees-grid">
-                    {{range .employees}}
-                    <div class="employee-card" onclick="window.location='/badge/{{.ID}}'">
-                        <div class="employee-card-image">
-                            {{if .Photo}}
-                            <img src="/uploads/{{.Photo}}" alt="Foto de {{.FullName}}">
+                <section class="content-panel">
+                    <div class="panel-header">
+                        <h2 class="section-title">All Employees</h2>
+                        <div class="sidebar-footer">
+                            {{if .showAll}}
+                            <a href="/dashboard?Off=false" class="show-all-btn">
+                                See all candidates 🟢
+                            </a>
                             {{else}}
-                            👤
+                            <a href="/dashboard?all=true" class="show-all-btn">
+                                See all candidates 🔴
+                            </a>
                             {{end}}
                         </div>
-                        <div class="employee-card-content">
-                            <div class="employee-card-name">{{.FullName}}</div>
-                            <div class="employee-card-position">{{.Position}}</div>
-                            <span class="employee-card-status status-{{.Status | lower}}">
-                                {{.Status}}
-                            </span>
+                    </div>
+
+                    {{if .employees}}
+                    <div class="employees-grid">
+                        {{range .employees}}
+                        <div class="employee-card" onclick="window.location='/badge/{{.ID}}'">
+                            <div class="employee-card-image">
+                                {{if .Photo}}
+                                <img src="{{.Photo}}" alt="Foto de {{.FullName}}">
+                                {{else}}
+                                👤
+                                {{end}}
+                            </div>
+                            <div class="employee-card-content">
+                                <div class="employee-card-name">{{.FullName}}</div>
+                                <div class="employee-card-position">{{.Position}}</div>
+                                <span class="employee-card-status status-{{.Status | lower}}">
+                                    {{.Status}}
+                                </span>
+                            </div>
                         </div>
+                        {{end}}
+                    </div>
+                    {{else}}
+                    <div class="no-employees-message">
+                        <p>No candidates registered yet.</p>
+                        <p>Access the management page to add new candidates.</p>
                     </div>
                     {{end}}
-                </div>
-                {{else}}
-                <div class="no-employees-message">
-                    <p>No candidates registered yet.</p>
-                    <p>Access the management page to add new candidates.</p>
-                </div>
-                {{end}}
+                </section>
             </main>
         </div>
     </div>
