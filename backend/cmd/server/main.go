@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"hr-management-web/backend/database"
@@ -158,5 +159,11 @@ func main() {
 		protected.GET("/logout", handlers.Logout)
 	}
 
-	r.Run(":8000")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+
+	log.Printf("Servidor rodando na porta %s", port)
+	r.Run(":" + port)
 }
