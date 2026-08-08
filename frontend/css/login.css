@@ -1,6 +1,70 @@
 /* login.css - Estilo consistente com o dashboard */
 @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
 
+:root {
+    --auth-grad-a: #e2e8f0;
+    --auth-grad-b: #cbd5e1;
+    --auth-glow: rgba(92, 107, 192, 0.05);
+    --card-bg: #ffffff;
+    --auth-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --title-grad-a: #1e293b;
+    --title-grad-b: #334155;
+    --label: #475569;
+    --input-border: #e2e8f0;
+    --input-bg: #ffffff;
+    --input-text: #1e293b;
+    --placeholder: #94a3b8;
+    --btn-grad-a: #5c6bc0;
+    --btn-grad-b: #3f51b5;
+    --btn-grad-c: #3949ab;
+    --btn-shadow: rgba(63, 81, 181, 0.2);
+    --btn-shadow-hover: rgba(63, 81, 181, 0.3);
+    --error-bg: #fee2e2;
+    --error-border: #fecaca;
+    --error-text: #dc2626;
+    --success-bg: #d1fae5;
+    --success-border: #a7f3d0;
+    --success-text: #059669;
+    --divider: #edf2f7;
+    --link: #5c6bc0;
+    --link-border: #cbd5e1;
+    --link-hover-bg: #f8f9fc;
+    --auth-focus: rgba(92, 107, 192, 0.1);
+    --auth-outline: #5c6bc0;
+}
+
+body.dark {
+    --auth-grad-a: #121a2c;
+    --auth-grad-b: #0b1220;
+    --auth-glow: rgba(129, 140, 248, 0.06);
+    --card-bg: #1a2336;
+    --auth-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(148, 163, 184, 0.15);
+    --title-grad-a: #f1f5f9;
+    --title-grad-b: #cbd5e1;
+    --label: #b8c2d4;
+    --input-border: #2c3a55;
+    --input-bg: #0f1626;
+    --input-text: #e6eaf2;
+    --placeholder: #64748b;
+    --btn-grad-a: #6366f1;
+    --btn-grad-b: #4f46e5;
+    --btn-grad-c: #4338ca;
+    --btn-shadow: rgba(99, 102, 241, 0.35);
+    --btn-shadow-hover: rgba(99, 102, 241, 0.45);
+    --error-bg: rgba(248, 113, 113, 0.12);
+    --error-border: rgba(248, 113, 113, 0.35);
+    --error-text: #f87171;
+    --success-bg: rgba(52, 211, 153, 0.12);
+    --success-border: rgba(52, 211, 153, 0.35);
+    --success-text: #34d399;
+    --divider: #263148;
+    --link: #a5b4fc;
+    --link-border: #33415e;
+    --link-hover-bg: #1c2638;
+    --auth-focus: rgba(129, 140, 248, 0.18);
+    --auth-outline: #818cf8;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -9,7 +73,7 @@
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    background: linear-gradient(135deg, var(--auth-grad-a) 0%, var(--auth-grad-b) 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -26,16 +90,16 @@ body::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 20% 80%, rgba(92, 107, 192, 0.05) 0%, transparent 50%);
+    background: radial-gradient(circle at 20% 80%, var(--auth-glow) 0%, transparent 50%);
     pointer-events: none;
 }
 
 /* Container estilo janela flutuante */
 .container {
-    background: #ffffff;
+    background: var(--card-bg);
     padding: 40px 36px;
     border-radius: 24px;
-    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--auth-shadow);
     width: 100%;
     max-width: 440px;
     transition: all 0.3s ease;
@@ -59,7 +123,7 @@ h1 {
     text-align: center;
     font-size: 28px;
     font-weight: 700;
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    background: linear-gradient(135deg, var(--title-grad-a) 0%, var(--title-grad-b) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -77,7 +141,7 @@ form {
 /* Labels */
 label {
     margin-bottom: 6px;
-    color: #475569;
+    color: var(--label);
     font-weight: 600;
     font-size: 13px;
     letter-spacing: 0.3px;
@@ -90,32 +154,32 @@ input[type="password"],
 input[type="email"] {
     padding: 12px 14px;
     margin-bottom: 16px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--input-border);
     border-radius: 12px;
     font-size: 14px;
     font-family: 'Inter', sans-serif;
     transition: all 0.2s ease;
-    background: #ffffff;
-    color: #1e293b;
+    background: var(--input-bg);
+    color: var(--input-text);
 }
 
 input[type="text"]:focus,
 input[type="password"]:focus,
 input[type="email"]:focus {
     outline: none;
-    border-color: #5c6bc0;
-    box-shadow: 0 0 0 3px rgba(92, 107, 192, 0.1);
+    border-color: var(--auth-outline);
+    box-shadow: 0 0 0 3px var(--auth-focus);
 }
 
 /* Placeholder */
 input::placeholder {
-    color: #94a3b8;
+    color: var(--placeholder);
     font-size: 13px;
 }
 
 /* Botão de login */
 button[type="submit"] {
-    background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+    background: linear-gradient(135deg, var(--btn-grad-a) 0%, var(--btn-grad-b) 100%);
     color: white;
     padding: 12px 20px;
     border: none;
@@ -126,13 +190,13 @@ button[type="submit"] {
     font-family: 'Inter', sans-serif;
     transition: all 0.2s ease;
     margin-top: 8px;
-    box-shadow: 0 2px 8px rgba(63, 81, 181, 0.2);
+    box-shadow: 0 2px 8px var(--btn-shadow);
 }
 
 button[type="submit"]:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(63, 81, 181, 0.3);
-    background: linear-gradient(135deg, #3f51b5 0%, #3949ab 100%);
+    box-shadow: 0 6px 16px var(--btn-shadow-hover);
+    background: linear-gradient(135deg, var(--btn-grad-b) 0%, var(--btn-grad-c) 100%);
 }
 
 button[type="submit"]:active {
@@ -141,27 +205,27 @@ button[type="submit"]:active {
 
 /* Mensagens de erro e sucesso */
 .error {
-    background: #fee2e2;
-    color: #dc2626;
+    background: var(--error-bg);
+    color: var(--error-text);
     text-align: center;
     margin-top: 16px;
     padding: 12px;
     border-radius: 12px;
     font-size: 13px;
     font-weight: 500;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--error-border);
 }
 
 .success {
-    background: #d1fae5;
-    color: #059669;
+    background: var(--success-bg);
+    color: var(--success-text);
     text-align: center;
     margin-top: 16px;
     padding: 12px;
     border-radius: 12px;
     font-size: 13px;
     font-weight: 500;
-    border: 1px solid #a7f3d0;
+    border: 1px solid var(--success-border);
 }
 
 /* Link de cadastro */
@@ -169,12 +233,12 @@ button[type="submit"]:active {
     text-align: center;
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid #edf2f7;
+    border-top: 1px solid var(--divider);
 }
 
 .page-link a {
     background: transparent;
-    color: #5c6bc0;
+    color: var(--link);
     padding: 8px 16px;
     border-radius: 10px;
     font-size: 13px;
@@ -182,7 +246,7 @@ button[type="submit"]:active {
     text-decoration: none;
     display: inline-block;
     transition: all 0.2s ease;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--link-border);
 }
 
 .page-link .recover-link {
@@ -190,8 +254,8 @@ button[type="submit"]:active {
 }
 
 .page-link a:hover {
-    background: #f8f9fc;
-    border-color: #5c6bc0;
+    background: var(--link-hover-bg);
+    border-color: var(--link);
     transform: translateY(-1px);
     text-decoration: none;
 }
@@ -223,6 +287,6 @@ button[type="submit"]:active {
 
 /* Efeito de foco nos inputs (melhoria de acessibilidade) */
 input:focus-visible {
-    outline: 2px solid #5c6bc0;
+    outline: 2px solid var(--auth-outline);
     outline-offset: 2px;
 }

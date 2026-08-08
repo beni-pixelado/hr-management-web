@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account | RH System</title>
@@ -22,6 +23,12 @@
         <div class="window-body">
             <aside class="sidebar">
                 <div class="nav-menu">
+                    {{if .User.Photo}}
+                    <img src="{{.User.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .User.Username 0 1}}</span>
+                    {{end}}
+
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
@@ -40,6 +47,11 @@
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
+                    </a>
+
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
                     </a>
 
                     <a href="/config" class="nav-item active">
@@ -71,6 +83,32 @@
                 {{end}}
 
                 <div class="config-grid">
+                    <section class="config-card photo-card">
+                        <div class="card-header">
+                            <h2>Profile photo</h2>
+                            <p>Upload a picture to personalize your account.</p>
+                        </div>
+
+                        <div class="photo-wrap">
+                            <div class="photo-avatar">
+                                {{if .User.Photo}}
+                                <img src="{{.User.Photo}}" alt="Profile photo">
+                                {{else}}
+                                <span>{{slice .User.Username 0 1}}</span>
+                                {{end}}
+                            </div>
+
+                            <form method="POST" action="/config/account/photo" enctype="multipart/form-data" class="config-form photo-form">
+                                <div class="form-group">
+                                    <label for="photo">Choose a photo</label>
+                                    <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Upload photo</button>
+                            </form>
+                        </div>
+                    </section>
+
                     <section class="config-card">
                         <div class="card-header">
                             <h2>Profile</h2>
@@ -91,6 +129,8 @@
                             <button type="submit" class="btn btn-primary">Save changes</button>
                         </form>
                     </section>
+
+                    <div class="settings-divider"></div>
 
                     <section class="config-card">
                         <div class="card-header">
@@ -117,28 +157,51 @@
                             <button type="submit" class="btn btn-primary">Update password</button>
                         </form>
                     </section>
+
+                    <section class="config-card cube-card">
+                        <div class="card-header">
+                            <h2>Account</h2>
+                            <p>Your account information.</p>
+                        </div>
+
+                        <div class="cube-stage">
+                            <div class="cube-grid">
+                                <div class="cube-face">
+                                    <span>ID</span>
+                                    <strong>{{.User.ID}}</strong>
+                                </div>
+                                <div class="cube-face">
+                                    <span>Username</span>
+                                    <strong>{{.User.Username}}</strong>
+                                </div>
+                                <div class="cube-face">
+                                    <span>Email</span>
+                                    <strong>{{.User.Email}}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                <section class="config-card account-card">
+                <section class="config-card danger-card">
                     <div class="card-header">
-                        <h2>Account</h2>
+                        <h2>Delete account</h2>
+                        <p>This action is permanent. All your data, including employees, will be removed.</p>
                     </div>
-                    <div class="account-row">
-                        <span class="account-label">User ID</span>
-                        <span class="account-value">{{.User.ID}}</span>
-                    </div>
-                    <div class="account-row">
-                        <span class="account-label">Username</span>
-                        <span class="account-value">{{.User.Username}}</span>
-                    </div>
-                    <div class="account-row">
-                        <span class="account-label">Email</span>
-                        <span class="account-value">{{.User.Email}}</span>
-                    </div>
+
+                    <form method="POST" action="/config/account/delete" class="config-form">
+                        <div class="form-group">
+                            <label for="current_password">Confirm your password</label>
+                            <input type="password" id="current_password" name="current_password" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to permanently delete your account? This cannot be undone.');">Delete account</button>
+                    </form>
                 </section>
             </main>
         </div>
     </div>
+    <script src="/js/dark-mode.js"></script>
 </body>
 
 </html>

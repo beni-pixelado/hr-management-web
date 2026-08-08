@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device | RH System</title>
+    <link rel="stylesheet" href="/css/config.css">
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div class="window-title">Device settings</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    {{if .user}}
+                    {{if .user.Photo}}
+                    <img src="{{.user.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .user.Username 0 1}}</span>
+                    {{end}}
+                    {{end}}
+
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/overview" class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
+
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>Departments</span>
+                    </a>
+
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
+                    </a>
+
+                    <a href="/config" class="nav-item active">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <a href="/config" class="back-link">← Back to configuration</a>
+
+                <div class="config-hero">
+                    <div class="eyebrow">Device settings</div>
+                    <h1>Device</h1>
+                    <p>Manage your device settings and preferences.</p>
+                </div>
+
+                {{if .error}}
+                <div class="flash flash-error">{{.error}}</div>
+                {{end}}
+                {{if .success}}
+                <div class="flash flash-success">{{.success}}</div>
+                {{end}}
+
+                <div class="config-grid">
+                    <section class="config-card">
+                        <div class="card-header">
+                            <h2>Appearance</h2>
+                            <p>Customize how the system looks on this device.</p>
+                        </div>
+
+                        <form class="config-form">
+                            <div class="form-group">
+                                <label for="theme">Theme</label>
+                                <select id="theme" name="theme">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save appearance</button>
+                        </form>
+                    </section>
+
+                    <section class="config-card">
+                        <div class="card-header">
+                            <h2>Notifications</h2>
+                            <p>Choose what notifications you receive.</p>
+                        </div>
+
+                        <form class="config-form">
+                            <div class="form-group">
+                                <label for="email_notifications">Email notifications</label>
+                                <select id="email_notifications" name="email_notifications">
+                                    <option value="enabled">Enabled</option>
+                                    <option value="disabled">Disabled</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save notifications</button>
+                        </form>
+                    </section>
+                </div>
+
+                <section class="config-card account-card">
+                    <div class="card-header">
+                        <h2>Device</h2>
+                        <p>Details about this device.</p>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Browser</span>
+                        <span class="account-value">{{.Browser}}</span>
+                    </div>
+                    <div class="account-row">
+                        <span class="account-label">Platform</span>
+                        <span class="account-value">{{.Platform}}</span>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/dark-mode.js"></script>
+</body>
+
+</html>

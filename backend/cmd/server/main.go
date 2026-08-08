@@ -39,6 +39,15 @@ func main() {
 	if err := db.AutoMigrate(&handlers.Department{}); err != nil {
 		log.Fatal("Department migration failed:", err)
 	}
+	if err := db.AutoMigrate(&handlers.PasswordResetToken{}); err != nil {
+		log.Fatal("PasswordResetToken migration failed:", err)
+	}
+	if db.Migrator().HasColumn(&handlers.PasswordResetToken{}, "code") {
+		if err := db.Migrator().DropColumn(&handlers.PasswordResetToken{}, "code"); err != nil {
+			log.Fatal("Failed to drop legacy password_reset_tokens.code column:", err)
+		}
+		log.Println("Dropped legacy password_reset_tokens.code column")
+	}
 
 	r := gin.Default()
 	r.SetTrustedProxies(nil)
@@ -50,7 +59,8 @@ func main() {
 
 	r.LoadHTMLGlob("backend/templates/*")
 	r.Static("/css", "frontend/css")
-	r.Static("/js", "frontend/public/js/graphics.js")
+	r.Static("/js", "frontend/public/js")
+	r.Static("/static", "frontend/static")
 
 	r.GET("/login", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "login.html", nil)
@@ -61,22 +71,15 @@ func main() {
 	r.POST("/register", handlers.Register)
 	r.POST("/login", handlers.Login)
 
+	r.GET("/recuperateaccount", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "recover.html", nil)
+	})
+	r.POST("/recuperateaccount", handlers.RecoverAccount)
+	r.GET("/reset-password", handlers.ResetPasswordPage)
+	r.POST("/reset-password", handlers.ResetPassword)
+
 	r.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/login")
-	})
-
-	r.GET("/debug/cookie", func(c *gin.Context) {
-		cookie, err := c.Cookie("hr_session")
-		if err != nil {
-			c.String(http.StatusOK, "COOKIE NOT FOUNDED: %v", err)
-			return
-		}
-
-		authenticated, userID := auth.IsAuthenticated(c)
-		c.String(
-			http.StatusOK,
-			fmt.Sprintf("Cookie: %s, Autenticado: %v, UserID: %d", cookie, authenticated, userID),
-		)
 	})
 
 	protected := r.Group("/")
@@ -87,6 +90,12 @@ func main() {
 
 			userID := handlers.GetCurrentUserID(c)
 			if userID == 0 {
+				c.Redirect(http.StatusFound, "/login")
+				return
+			}
+
+			var user handlers.User
+			if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
 				c.Redirect(http.StatusFound, "/login")
 				return
 			}
@@ -127,13 +136,30 @@ func main() {
 				"showAll":        showAll,
 				"showOff":        showOff,
 				"totalEmployees": totalEmployees,
+				"user":           user,
 			})
 
+		})
+
+		protected.GET("/debug/cookie", func(c *gin.Context) {
+			cookie, err := c.Cookie("hr_session")
+			if err != nil {
+				c.String(http.StatusOK, "COOKIE NOT FOUNDED: %v", err)
+				return
+			}
+
+			authenticated, userID := auth.IsAuthenticated(c)
+			c.String(
+				http.StatusOK,
+				fmt.Sprintf("Cookie: %s, Autenticado: %v, UserID: %d", cookie, authenticated, userID),
+			)
 		})
 
 		protected.GET("/badge/:id", handlers.BadgeHandler)
 		protected.GET("/employees", handlers.GetEmployees)
 		protected.POST("/employees", handlers.CreateEmployee)
+		protected.GET("/employees/:id/edit", handlers.EditEmployeePage)
+		protected.POST("/employees/:id/edit", handlers.UpdateEmployee)
 		protected.POST("/employees/:id/status", handlers.UpdateEmployeeStatus)
 		protected.DELETE("/employees/:id", handlers.DeleteEmployee)
 		protected.POST("/employees/:id/delete", handlers.DeleteEmployeeForm)
@@ -146,15 +172,21 @@ func main() {
 		protected.POST("/department/:id/delete", handlers.DeleteDepartment)
 
 		protected.GET("/overview", handlers.OverviewHandler)
+		protected.GET("/report", handlers.ReportHandler)
+		protected.GET("/report/new", handlers.ReportNewHandler)
+		protected.POST("/report/new", handlers.CreateReportHandler)
 		protected.GET("/api/overview/departments", handlers.OverviewDataHandlerDepartments)
 		protected.GET("/api/overview/employees", handlers.OverviewDataHandlerEmployees)
 
 		protected.GET("/config", handlers.ConfigPageHandler)
 		protected.GET("/config/account", handlers.AccountPageHandler)
+		protected.GET("/config/device", handlers.DevicePageHandler)
 		protected.POST("/config/account/profile", handlers.UpdateProfileHandler)
+		protected.POST("/config/account/photo", handlers.UpdateProfilePhotoHandler)
 		protected.POST("/config/account/password", handlers.ChangePasswordHandler)
+		protected.POST("/config/account/delete", handlers.DeleteAccountHandler)
 
-		protected.GET("/recuperateaccount", handlers.RecoverAccount)
+		protected.GET("/recover", handlers.RecoverAccountPageHandler)
 
 		protected.GET("/logout", handlers.Logout)
 	}

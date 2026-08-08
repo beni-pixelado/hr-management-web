@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Overview | RH System</title>
@@ -22,6 +23,14 @@
         <div class="window-body">
             <aside class="sidebar">
                 <div class="nav-menu">
+                    {{if .user}}
+                    {{if .user.Photo}}
+                    <img src="{{.user.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .user.Username 0 1}}</span>
+                    {{end}}
+                    {{end}}
+
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
@@ -40,6 +49,11 @@
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
+                    </a>
+
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
                     </a>
 
                     <a href="/config" class="nav-item">
@@ -76,6 +90,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="/js/departments-pie.js"></script>
     <script src="/js/employees-line.js"></script>
+    <script src="/js/dark-mode.js"></script>
 </body>
 
 </html>

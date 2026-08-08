@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Candidates | RH System</title>
@@ -26,6 +27,14 @@
         <div class="window-body">
             <aside class="sidebar">
                 <div class="nav-menu">
+                    {{if .user}}
+                    {{if .user.Photo}}
+                    <img src="{{.user.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .user.Username 0 1}}</span>
+                    {{end}}
+                    {{end}}
+
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
@@ -44,6 +53,16 @@
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
+                    </a>
+
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
+                    </a>
+
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
                     </a>
 
                     <a href="/" class="nav-item">
@@ -79,6 +98,11 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="description">Description:</label>
+                            <textarea id="description" name="description" rows="3" placeholder="Short description about the candidate (skills, experience...)."></textarea>
+                        </div>
+
+                        <div class="form-group">
                             <label for="photo">Photo (optional - Max 5MB):</label>
                             <input type="file" id="photo" name="photo" accept="image/*">
                             <small>Accepted formats: JPG, PNG, GIF, WebP</small>
@@ -90,7 +114,29 @@
 
                 <section class="employees-section">
                     <div class="employees-section-header">
-                        <h2>List of Candidates</h2>
+                        <div class="employees-section-title">
+                            <h2>List of Candidates</h2>
+                            {{if ne .currentStatus "all"}}
+                            <div class="section-subtitle">Showing {{.currentCount}} of {{.totalEmployees}} {{.currentLabel}}</div>
+                            {{else}}
+                            <div class="section-subtitle">{{.totalEmployees}} candidates</div>
+                            {{end}}
+                        </div>
+
+                        <div class="candidate-filters">
+                            <a href="/employees" class="filter-btn {{if eq .currentStatus "all"}}active{{end}}">
+                                Sem filtro ({{.totalEmployees}})
+                            </a>
+                            <a href="/employees?status=interviewing" class="filter-btn {{if eq .currentStatus "interviewing"}}active{{end}}">
+                                Interview ({{.totalInterviewing}})
+                            </a>
+                            <a href="/employees?status=contractors" class="filter-btn {{if eq .currentStatus "contractors"}}active{{end}}">
+                                Hired ({{.totalHired}})
+                            </a>
+                            <a href="/employees?status=rejected" class="filter-btn {{if eq .currentStatus "rejected"}}active{{end}}">
+                                Rejected ({{.totalRejected}})
+                            </a>
+                        </div>
                     </div>
 
                     {{if .employees}}
@@ -102,6 +148,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Position</th>
+                                    <th>Description</th>
                                     <th>Status</th>
                                     <th>Hiring Date</th>
                                     <th>Actions</th>
@@ -123,6 +170,14 @@
                                     <td>{{.Email}}</td>
                                     <td>{{.Position}}</td>
 
+                                    <td class="description-cell">
+                                        {{if .Description}}
+                                        <span class="description-text">{{.Description}}</span>
+                                        {{else}}
+                                        <span class="no-description">—</span>
+                                        {{end}}
+                                    </td>
+
                                     <td>
                                         <span class="status-badge status-{{.Status | lower}}">{{.Status}}</span>
                                     </td>
@@ -130,6 +185,7 @@
                                     <td>{{.HireDate}}</td>
 
                                     <td class="actions">
+
                                         {{if eq .Status "pending"}}
                                         <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
                                             <input type="hidden" name="status" value="contractors">
@@ -144,6 +200,7 @@
                                         {{end}}
 
                                         <form method="POST" action="/employees/{{.ID}}/delete" style="display:inline;">
+                                            <a href="/employees/{{.ID}}/edit" class="btn btn-secondary btn-sm">Edit</a>
                                             <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this candidate?')">
                                                 Delete
                                             </button>
@@ -157,23 +214,31 @@
 
                     <div class="pagination">
                         {{if gt .currentPage 1}}
-                        <a href="/employees?page={{.prevPage}}" class="page-btn">← Previous</a>
+                        <a href="/employees?page={{.prevPage}}{{if ne .currentStatus "all"}}&status={{.currentStatus}}{{end}}" class="page-btn">← Previous</a>
                         {{end}}
 
                         <span class="page-info">Page {{.currentPage}} of {{.totalPages}}</span>
 
                         {{if lt .currentPage .totalPages}}
-                        <a href="/employees?page={{.nextPage}}" class="page-btn">Next →</a>
+                        <a href="/employees?page={{.nextPage}}{{if ne .currentStatus "all"}}&status={{.currentStatus}}{{end}}" class="page-btn">Next →</a>
                         {{end}}
+
+                        <form method="GET" action="/employees" class="page-jump">
+                            <input type="number" name="page" min="1" max="{{.totalPages}}" value="{{.currentPage}}" placeholder="Page" aria-label="Jump to page">
+                            {{if ne .currentStatus "all"}}<input type="hidden" name="status" value="{{.currentStatus}}">{{end}}
+                            <button type="submit" class="btn btn-primary btn-sm">Go</button>
+                        </form>
                     </div>
 
                     {{else}}
-                    <p class="no-employees">No candidates registered yet.</p>
+                    <p class="no-employees">No candidates found for this filter.</p>
                     {{end}}
                 </section>
             </main>
         </div>
     </div>
+    <script src="/js/dark-mode.js"></script>
+    <script src="/js/description-clamp.js"></script>
 </body>
 
 </html>

@@ -580,8 +580,13 @@ Every variable listed in the blueprint must be filled in (they are marked as `sy
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary dashboard |
 | `CLOUDINARY_API_KEY` | Cloudinary dashboard |
 | `CLOUDINARY_API_SECRET` | Cloudinary dashboard |
-| `RESEND_API_KEY` | Resend dashboard (used for password recovery e-mail) |
-| `RESEND_FROM` | Verified sender, e.g. `HR Management <onboarding@resend.dev>` |
+| `SMTP_HOST` | SMTP server, e.g. `smtp.gmail.com` (used for password recovery e-mail) |
+| `SMTP_PORT` | SMTP port, e.g. `587` |
+| `SMTP_EMAIL` | SMTP account e-mail used to authenticate |
+| `SMTP_PASSWORD` | SMTP account password / app password |
+| `SMTP_FROM` | Sender address shown in the e-mail, e.g. `staffio.mail@gmail.com` |
+| `SMTP_FROM_NAME` | Sender display name, e.g. `Staffio` |
+| `SITE_URL` | Your app URL used in the reset link, e.g. `https://your-service.onrender.com` (falls back to the request host) |
 
 The port is injected by Render automatically via the `PORT` environment variable — the server already reads it (`os.Getenv("PORT")`).
 

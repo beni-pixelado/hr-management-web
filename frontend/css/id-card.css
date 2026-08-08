@@ -1,5 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+    --id-bg: #e2e8f0;
+    --id-panel: #ffffff;
+    --id-border: #e2e8f0;
+    --id-soft: #f8fafc;
+    --id-text: #1e293b;
+    --id-name: #0f172a;
+    --id-muted: #64748b;
+    --id-muted-strong: #334155;
+    --id-link: #475569;
+    --id-link-hover-bg: #f1f5f9;
+    --id-link-hover: #3f51b5;
+    --id-shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.08), 0 4px 10px rgba(15, 23, 42, 0.04);
+    --id-shadow-sm: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+body.dark {
+    --id-bg: #0b1220;
+    --id-panel: #151d2e;
+    --id-border: #263148;
+    --id-soft: #1c2638;
+    --id-text: #e6eaf2;
+    --id-name: #f1f5f9;
+    --id-muted: #94a3b8;
+    --id-muted-strong: #cbd5e1;
+    --id-link: #b8c2d4;
+    --id-link-hover-bg: #1c2638;
+    --id-link-hover: #a5b4fc;
+    --id-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.45), 0 4px 10px rgba(0, 0, 0, 0.3);
+    --id-shadow-sm: 0 8px 18px rgba(0, 0, 0, 0.4);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -9,7 +41,7 @@
 body {
     font-family: 'Inter', sans-serif;
 
-    background: #e2e8f0;
+    background: var(--id-bg);
 
     min-height: 100vh;
 
@@ -19,7 +51,7 @@ body {
 
     padding: 40px;
 
-    color: #1e293b;
+    color: var(--id-text);
 }
 
 .container {
@@ -32,17 +64,15 @@ body {
     width: 100%;
     max-width: 950px;
 
-    background: #ffffff;
+    background: var(--id-panel);
 
     border-radius: 28px;
 
     padding: 32px;
 
-    box-shadow:
-        0 10px 25px rgba(15, 23, 42, 0.08),
-        0 4px 10px rgba(15, 23, 42, 0.04);
+    box-shadow: var(--id-shadow-lg);
 
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--id-border);
 }
 
 .card-body {
@@ -59,10 +89,9 @@ body {
 
     border-radius: 24px;
 
-    border: 4px solid #f8fafc;
+    border: 4px solid var(--id-soft);
 
-    box-shadow:
-        0 8px 18px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--id-shadow-sm);
 }
 
 .employee-photo {
@@ -75,7 +104,7 @@ body {
 
     font-size: 72px;
 
-    background: #f8fafc;
+    background: var(--id-soft);
 
     border-radius: 24px;
 }
@@ -95,14 +124,14 @@ body {
 
     line-height: 1.1;
 
-    color: #0f172a;
+    color: var(--id-name);
 }
 
 .employee-position {
     font-size: 18px;
     font-weight: 500;
 
-    color: #64748b;
+    color: var(--id-muted);
 }
 
 .info-row {
@@ -115,7 +144,7 @@ body {
 
 .employee-email,
 .employee-id {
-    background: #f8fafc;
+    background: var(--id-soft);
 
     padding: 14px 18px;
 
@@ -124,9 +153,9 @@ body {
     font-size: 15px;
     font-weight: 500;
 
-    color: #334155;
+    color: var(--id-muted-strong);
 
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--id-border);
 
     width: 100%;
 }
@@ -141,7 +170,7 @@ body {
             gap: 12px;
             padding: 10px 16px;
             border-radius: 12px;
-            color: #475569;
+            color: var(--id-link);
             font-size: 14px;
             font-weight: 500;
             text-decoration: none;
@@ -149,8 +178,8 @@ body {
 }
 
 .back-button:hover {
-    background: #f1f5f9;
-            color: #3f51b5;
+    background: var(--id-link-hover-bg);
+            color: var(--id-link-hover);
 }
 
 @media (max-width: 850px) {

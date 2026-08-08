@@ -51,10 +51,17 @@ func DepartmentHandler(c *gin.Context) {
 	var members []Employee
 	_ = DB.Where("department_id = ? AND user_id = ?", dept.ID, GetCurrentUserID(c)).Find(&members).Error
 
+	var user User
+	if err := DB.Where("id = ?", GetCurrentUserID(c)).First(&user).Error; err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
 	c.HTML(http.StatusOK, "department.html", gin.H{
 		"Department": dept,
 		"Employees":  allEmployees,
 		"Members":    members,
+		"user":       user,
 	})
 }
 
@@ -177,9 +184,16 @@ func DepartmentPageHandler(c *gin.Context) {
 		return
 	}
 
+	var user User
+	if err := DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
 	c.HTML(http.StatusOK, "departments.html", gin.H{
 		"Employees":   employees,
 		"Departments": departments,
+		"user":        user,
 	})
 }
 

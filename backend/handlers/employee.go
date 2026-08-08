@@ -31,6 +31,7 @@ type Employee struct {
 	FullName     string `json:"full_name" gorm:"not null"`
 	Email        string `json:"email" gorm:"not null"`
 	Position     string `json:"position" gorm:"not null"`
+	Description  string `json:"description" gorm:"type:text"`
 	Status       string `json:"status" gorm:"not null;default:'pending'"`
 	HireDate     string `json:"hire_date"`
 	Photo        string `json:"photo"`
@@ -102,32 +103,91 @@ func GetEmployees(c *gin.Context) {
 		page = 1
 	}
 
+	status := c.DefaultQuery("status", "all")
+
+	statusFilter := status
+	currentLabel := ""
+	switch status {
+	case "interviewing":
+		statusFilter = "pending"
+		currentLabel = "in interview"
+	case "hired":
+		statusFilter = "contractors"
+		currentLabel = "hired"
+	case "rejected":
+		statusFilter = "rejected"
+		currentLabel = "rejected"
+	}
+
 	limit := 20
 	offset := (page - 1) * limit
 
-	var totalEmployees int64
+	var totalAll int64
+	var totalInterviewing int64
+	var totalHired int64
+	var totalRejected int64
+	var totalFiltered int64
 	userID := GetCurrentUserID(c)
 
 	DB.
 		Model(&Employee{}).
 		Where("user_id = ?", userID).
-		Count(&totalEmployees)
+		Count(&totalAll)
 
 	DB.
-		Where("user_id = ?", userID).
+		Model(&Employee{}).
+		Where("user_id = ? AND status = ?", userID, "pending").
+		Count(&totalInterviewing)
+
+	DB.
+		Model(&Employee{}).
+		Where("user_id = ? AND status = ?", userID, "contractors").
+		Count(&totalHired)
+
+	DB.
+		Model(&Employee{}).
+		Where("user_id = ? AND status = ?", userID, "rejected").
+		Count(&totalRejected)
+
+	countQuery := DB.
+		Model(&Employee{}).
+		Where("user_id = ?", userID)
+	if statusFilter != "all" {
+		countQuery = countQuery.Where("status = ?", statusFilter)
+	}
+	countQuery.Count(&totalFiltered)
+
+	listQuery := DB.Where("user_id = ?", userID)
+	if statusFilter != "all" {
+		listQuery = listQuery.Where("status = ?", statusFilter)
+	}
+	listQuery.
 		Limit(limit).
 		Offset(offset).
 		Find(&employees)
 
-	totalPages := int(math.Ceil(float64(totalEmployees) / float64(limit)))
+	totalPages := int(math.Ceil(float64(totalFiltered) / float64(limit)))
+
+	var user User
+	if err := DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
 
 	c.HTML(http.StatusOK, "employees.html", gin.H{
-		"employees":      employees,
-		"currentPage":    page,
-		"totalPages":     totalPages,
-		"totalEmployees": totalEmployees,
-		"prevPage":       page - 1,
-		"nextPage":       page + 1,
+		"employees":         employees,
+		"currentPage":       page,
+		"totalPages":        totalPages,
+		"totalEmployees":    totalAll,
+		"currentCount":      totalFiltered,
+		"totalInterviewing": totalInterviewing,
+		"totalHired":        totalHired,
+		"totalRejected":     totalRejected,
+		"currentStatus":     status,
+		"currentLabel":      currentLabel,
+		"prevPage":          page - 1,
+		"nextPage":          page + 1,
+		"user":              user,
 	})
 }
 
@@ -135,6 +195,7 @@ func CreateEmployee(c *gin.Context) {
 	fullName := c.PostForm("full_name")
 	email := c.PostForm("email")
 	position := c.PostForm("position")
+	description := c.PostForm("description")
 
 	if fullName == "" || email == "" || position == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields (name, email, position) are required"})
@@ -142,11 +203,12 @@ func CreateEmployee(c *gin.Context) {
 	}
 
 	employee := Employee{
-		UserID:   GetCurrentUserID(c),
-		FullName: fullName,
-		Email:    email,
-		Position: position,
-		Status:   "pending",
+		UserID:      GetCurrentUserID(c),
+		FullName:    fullName,
+		Email:       email,
+		Position:    position,
+		Description: description,
+		Status:      "pending",
 	}
 
 	file, err := c.FormFile("photo")
@@ -254,6 +316,105 @@ func DeleteEmployeeForm(c *gin.Context) {
 	}
 
 	log.Printf("Employee %s deleted via form\n", id)
+
+	c.Redirect(http.StatusFound, "/employees")
+}
+
+func EditEmployeePage(c *gin.Context) {
+	id := c.Param("id")
+	userID := GetCurrentUserID(c)
+	if userID == 0 {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	var employee Employee
+	if err := DB.
+		Where("id = ? AND user_id = ?", id, userID).
+		First(&employee).Error; err != nil {
+		c.Redirect(http.StatusFound, "/employees")
+		return
+	}
+
+	var user User
+	if err := DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	c.HTML(http.StatusOK, "employee-edit.html", gin.H{
+		"Employee": employee,
+		"user":     user,
+	})
+}
+
+func UpdateEmployee(c *gin.Context) {
+	id := c.Param("id")
+	userID := GetCurrentUserID(c)
+	if userID == 0 {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	var employee Employee
+	if err := DB.
+		Where("id = ? AND user_id = ?", id, userID).
+		First(&employee).Error; err != nil {
+		c.Redirect(http.StatusFound, "/employees")
+		return
+	}
+
+	fullName := c.PostForm("full_name")
+	email := c.PostForm("email")
+	position := c.PostForm("position")
+	description := c.PostForm("description")
+
+	if fullName == "" || email == "" || position == "" {
+		c.Redirect(http.StatusFound, "/employees/"+id+"/edit")
+		return
+	}
+
+	updates := map[string]interface{}{
+		"full_name":   fullName,
+		"email":       email,
+		"position":    position,
+		"description": description,
+	}
+
+	photoReplaced := false
+
+	file, err := c.FormFile("photo")
+	if err == nil {
+		photoURL, saveErr := saveUploadedImage(c, file)
+		if saveErr != nil {
+			log.Printf("Error saving image: %v\n", saveErr)
+			c.Redirect(http.StatusFound, "/employees/"+id+"/edit")
+			return
+		}
+		updates["photo"] = photoURL
+		photoReplaced = true
+	} else if err != http.ErrMissingFile {
+		log.Printf("Error processing upload: %v\n", err)
+		c.Redirect(http.StatusFound, "/employees/"+id+"/edit")
+		return
+	}
+
+	if err := DB.
+		Model(&Employee{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Updates(updates).Error; err != nil {
+		log.Println("Error updating employee:", err)
+		c.Redirect(http.StatusFound, "/employees/"+id+"/edit")
+		return
+	}
+
+	if photoReplaced {
+		if err := storage.Destroy(c.Request.Context(), employee.Photo); err != nil {
+			log.Printf("Error deleting old photo on Cloudinary: %v\n", err)
+		}
+	}
+
+	log.Printf("Employee %s updated\n", id)
 
 	c.Redirect(http.StatusFound, "/employees")
 }

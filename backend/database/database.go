@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -11,13 +13,18 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	println("Entered Connect")
-
 	dsn := os.Getenv("DATABASE_URL")
 
-	println("DATABASE:", dsn)
+	connConfig, err := pgx.ParseConfig(dsn)
+	if err != nil {
+		log.Fatal("Error parsing database config:", err)
+	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	connConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheDescribe
+
+	sqlDB := stdlib.OpenDB(*connConfig)
+
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)

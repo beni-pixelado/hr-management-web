@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Candidate | RH System</title>
+    <link rel="stylesheet" href="/css/employees.css">
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div>
+                <div class="eyebrow">HR Management</div>
+                <div class="window-title">Edit Candidate</div>
+            </div>
+            <div class="window-status">Candidate flow</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    {{if .user}}
+                    {{if .user.Photo}}
+                    <img src="{{.user.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .user.Username 0 1}}</span>
+                    {{end}}
+                    {{end}}
+
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="/overview" class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
+
+                    <a href="/employees" class="nav-item active">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>Departments</span>
+                    </a>
+
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
+                    </a>
+
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+
+                    <a href="/" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <section class="form-section">
+                    <div class="section-intro">
+                        <div>
+                            <div class="eyebrow">Edit</div>
+                            <h2>Edit Candidate</h2>
+                        </div>
+                        <a href="/employees" class="btn btn-secondary">← Back to candidates</a>
+                    </div>
+
+                    <form method="POST" action="/employees/{{.Employee.ID}}/edit" enctype="multipart/form-data" class="employee-form">
+                        <div class="form-group">
+                            <label for="full_name">Full Name:</label>
+                            <input type="text" id="full_name" name="full_name" value="{{.Employee.FullName}}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" value="{{.Employee.Email}}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="position">Position:</label>
+                            <input type="text" id="position" name="position" value="{{.Employee.Position}}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description:</label>
+                            <textarea id="description" name="description" rows="3">{{.Employee.Description}}</textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="photo">Photo (optional - Max 5MB):</label>
+                            <input type="file" id="photo" name="photo" accept="image/*">
+                            <small>Leave empty to keep the current photo.</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script src="/js/dark-mode.js"></script>
+</body>
+
+</html>
