@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Employee management system for businesses. Organize your team simply and efficiently.">
+    <title>Staffio — your hiring control tower</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/landing.css">
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark">◆</span>
+            <span>Staffio</span>
+        </div>
+        <nav class="topnav">
+            <a href="#pipeline">How it works</a>
+            <a href="#showcase">The system</a>
+            <a href="#ownership">Independence</a>
+        </nav>
+        <div class="topbar-actions">
+            <a href="/login" class="link-ghost">To enter</a>
+            <a href="/register" class="btn-solid">Create account →</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- HERO -->
+        <section class="hero">
+            <p class="kicker">a system that is yours, not rented</p>
+            <h1>Hiring shouldn't<br>o <em>chaos</em>.</h1>
+            <p class="hero-sub">Staffio organizes each candidate, each team and each stage of hiring in a single panel — without depending on external platforms to run your business.</p>
+            <div class="hero-actions">
+                <a href="/register" class="btn-solid btn-lg">Start for free</a>
+                <a href="#pipeline" class="link-underline">see the pipeline in action ↓</a>
+            </div>
+        </section>
+
+        <!-- PIPELINE — SIGNATURE ELEMENT -->
+        <section class="pipeline-section" id="pipeline">
+            <div class="pipeline-stages">
+                <div class="stage">
+                    <div class="stage-head"><span class="stage-dot dot-applied"></span>Applied</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-head"><span class="stage-dot dot-interview"></span>Interview</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-head"><span class="stage-dot dot-hired"></span>Hired</div>
+                </div>
+            </div>
+
+            <div class="pipeline-track" aria-hidden="true">
+                <div class="lane lane-1">
+                    <div class="chip chip-a">MS</div>
+                    <div class="chip chip-b">RC</div>
+                    <div class="chip chip-c">AF</div>
+                </div>
+                <div class="lane lane-2">
+                    <div class="chip chip-d">JT</div>
+                    <div class="chip chip-e">LP</div>
+                </div>
+                <div class="lane lane-3">
+                    <div class="chip chip-f">NV</div>
+                </div>
+            </div>
+
+            <p class="pipeline-caption">each bubble is a real candidate from your pipeline — moving on its own as status changes.</p>
+        </section>
+
+        <!-- SHOWCASE -->
+        <section class="showcase" id="showcase">
+            <h2 class="section-title">The system, the way it is</h2>
+            <p class="showcase-sub">No institutional video, no mockup. This is the dashboard your team will use every day.</p>
+
+            <div class="showcase-grid">
+                <figure class="shot shot-wide">
+                    <div class="shot-frame">
+                        <img src="/static/screenshots/dashboard.png" alt="Painel geral com candidatos e indicadores">
+                        <span class="shot-placeholder">general panel image</span>
+                    </div>
+                    <figcaption>Overview of the entire operation, on a single screen.</figcaption>
+                </figure>
+
+                <figure class="shot">
+                    <div class="shot-frame">
+                        <img src="/static/screenshots/candidatos.png" alt="Lista de candidatos com status">
+                        <span class="shot-placeholder">candidate list image</span>
+                    </div>
+                    <figcaption>Each person, with their status always visible..</figcaption>
+                </figure>
+
+                <figure class="shot">
+                    <div class="shot-frame">
+                        <img src="/static/screenshots/departamentos.png" alt="Departamentos organizados por equipe">
+                        <span class="shot-placeholder">department list image</span>
+                    </div>
+                    <figcaption>Teams organized in your way, not the system's way.</figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <!-- OWNERSHIP -->
+        <section class="ownership" id="ownership">
+            <h2 class="section-title">Made to be truly yours.</h2>
+            <div class="ownership-grid">
+                <article class="ownership-card">
+                    <h3>Without relying on a giant platform</h3>
+                    <p>The system runs your way, at your pace — your company isn't held hostage by licenses, user limits, or prices that change without notice.</p>
+                </article>
+                <article class="ownership-card">
+                    <h3>Your data remains yours</h3>
+                    <p>The information about candidates and your team belongs to your company, not a third-party vendor deciding what to do with it.</p>
+                </article>
+                <article class="ownership-card">
+                    <h3>Simple to use, no learning curve</h3>
+                    <p>No lengthy training, no 40-page manual. Your team understands the dashboard the moment they open it..</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta">
+            <h2>Sua próxima contratação começa aqui.</h2>
+            <p class="cta-sub">Sem contrato longo, sem letra miúda. Comece a usar hoje.</p>
+            <a href="/register" class="btn-solid btn-lg">Criar conta gratuita</a>
+        </section>
+    </main>
+
+    <footer class="landing-footer">
+        <span>Staffio · HR Management</span>
+        <a href="/login">Já tenho conta</a>
+    </footer>
+</body>
+
+</html>

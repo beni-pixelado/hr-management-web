@@ -42,6 +42,12 @@ func main() {
 	if err := db.AutoMigrate(&handlers.PasswordResetToken{}); err != nil {
 		log.Fatal("PasswordResetToken migration failed:", err)
 	}
+	if err := db.AutoMigrate(&handlers.Report{}); err != nil {
+		log.Fatal("Report migration failed:", err)
+	}
+	if err := db.AutoMigrate(&handlers.Absence{}); err != nil {
+		log.Fatal("Absence migration failed:", err)
+	}
 	if db.Migrator().HasColumn(&handlers.PasswordResetToken{}, "code") {
 		if err := db.Migrator().DropColumn(&handlers.PasswordResetToken{}, "code"); err != nil {
 			log.Fatal("Failed to drop legacy password_reset_tokens.code column:", err)
@@ -78,8 +84,10 @@ func main() {
 	r.GET("/reset-password", handlers.ResetPasswordPage)
 	r.POST("/reset-password", handlers.ResetPassword)
 
-	r.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusFound, "/login")
+	r.GET("/", func(c *gin.Context) { c.HTML(http.StatusOK, "landing.html", nil) })
+
+	r.GET("/robots.txt", func(c *gin.Context) {
+		c.File("robots.txt")
 	})
 
 	protected := r.Group("/")
@@ -161,6 +169,7 @@ func main() {
 		protected.GET("/employees/:id/edit", handlers.EditEmployeePage)
 		protected.POST("/employees/:id/edit", handlers.UpdateEmployee)
 		protected.POST("/employees/:id/status", handlers.UpdateEmployeeStatus)
+		protected.POST("/employees/:id/absence", handlers.MarkAbsence)
 		protected.DELETE("/employees/:id", handlers.DeleteEmployee)
 		protected.POST("/employees/:id/delete", handlers.DeleteEmployeeForm)
 
@@ -177,6 +186,7 @@ func main() {
 		protected.POST("/report/new", handlers.CreateReportHandler)
 		protected.GET("/api/overview/departments", handlers.OverviewDataHandlerDepartments)
 		protected.GET("/api/overview/employees", handlers.OverviewDataHandlerEmployees)
+		protected.GET("/api/report/absences", handlers.ReportAbsencesContent)
 
 		protected.GET("/config", handlers.ConfigPageHandler)
 		protected.GET("/config/account", handlers.AccountPageHandler)

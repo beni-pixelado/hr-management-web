@@ -313,6 +313,34 @@ body {
     font-size: 0.94rem;
 }
 
+.snapshot-note {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--summary-border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, var(--summary-grad-a), var(--summary-grad-b));
+}
+
+.snapshot-note-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--primary-tint);
+    color: var(--primary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.snapshot-note-text {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 .hero-summary {
     padding: 18px;
     display: grid;

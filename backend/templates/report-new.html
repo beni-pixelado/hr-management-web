@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Report | RH System</title>
-    <link rel="stylesheet" href="/css/overview.css">
+    <title>Create Report | HR System</title>
+    <link rel="stylesheet" href="/css/reports.css">
 </head>
 
 <body>
@@ -65,7 +65,7 @@
                         <span>Configuration</span>
                     </a>
 
-                    <a href="/" class="nav-item">
+                    <a href="/login" class="nav-item">
                         <span class="nav-icon">↩️</span>
                         <span>Return to login</span>
                     </a>
@@ -73,29 +73,69 @@
             </aside>
 
             <main class="main-content">
-                <section class="report-form-section">
-                    <div class="section-intro">
-                        <div class="eyebrow">Create report</div>
-                        <h2>New Report</h2>
+                <div class="reports-head">
+                    <div>
+                        <div class="eyebrow">Absence tracking</div>
+                        <h1 class="reports-title">New report</h1>
+                        <p class="reports-subtitle">Set the report type and time window to generate.</p>
+                    </div>
+                    <a href="/report" class="btn btn-secondary btn-lg">Back to reports</a>
+                </div>
+
+                <form class="report-form" method="POST" action="/report/new">
+                    <div class="report-form-grid">
+                        <section class="report-card">
+                            <div class="report-card-head">
+                                <span class="report-card-step">1</span>
+                                <div>
+                                    <h2>Report type</h2>
+                                    <p>What should this report track?</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="type">Report of</label>
+                                <div class="select-wrap">
+                                    <select id="type" name="report-type">
+                                        <option value="absences">Absences</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="report-card">
+                            <div class="report-card-head">
+                                <span class="report-card-step">2</span>
+                                <div>
+                                    <h2>Time period</h2>
+                                    <p>Choose how far back to look.</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="time">Count absences in the last</label>
+                                <div class="select-wrap">
+                                    <select id="time" name="time-report">
+                                        <option value="week">Week (7 days)</option>
+                                        <option value="month">Month (30 days)</option>
+                                        <option value="year">Year (365 days)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="report-preview">
+                                <div class="report-preview-label">Live preview</div>
+                                <p id="time-feedback" class="report-feedback">Loading...</p>
+                            </div>
+                        </section>
                     </div>
 
-                    <form method="POST" action="/report/new" class="report-form">
-                        <div class="form-group">
-                            <label for="name">Report name:</label>
-                            <input type="text" id="name" name="name" placeholder="e.g. Hiring Q3" required>
-                        </div>
-
-                        <div class="report-categories">
-                            <div class="report-categories-title">Categories</div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Create Report</button>
+                    <div class="report-form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">Create report</button>
+                    </div>
                 </form>
-                </section>
             </main>
         </div>
     </div>
     <script src="/js/dark-mode.js"></script>
+    <script src="/js/dynamic-text.js"></script>
 </body>
 
 </html>

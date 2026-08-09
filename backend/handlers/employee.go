@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -36,6 +37,14 @@ type Employee struct {
 	HireDate     string `json:"hire_date"`
 	Photo        string `json:"photo"`
 	DepartmentID uint   `json:"department_id"`
+	Absences     uint   `json:"absences" gorm:"not null;default:0"`
+}
+
+type Absence struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	CreatedAt  time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UserID     uint      `gorm:"not null;index"`
+	EmployeeID uint      `gorm:"not null;index"`
 }
 
 const MaxFileSize = 5 * 1024 * 1024
@@ -243,6 +252,46 @@ func CreateEmployee(c *gin.Context) {
 	log.Printf("New employee added: %s (Photo: %s)\n", fullName, employee.Photo)
 
 	c.Redirect(http.StatusFound, "/employees")
+}
+
+func MarkAbsence(c *gin.Context) {
+	id := c.Param("id")
+	userID := GetCurrentUserID(c)
+
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var employee Employee
+		if err := tx.
+			Where("id = ? AND user_id = ?", id, userID).
+			First(&employee).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Create(&Absence{
+			UserID:     userID,
+			EmployeeID: employee.ID,
+		}).Error; err != nil {
+			return err
+		}
+
+		return tx.
+			Model(&Employee{}).
+			Where("id = ? AND user_id = ?", id, userID).
+			UpdateColumn("absences", gorm.Expr("absences + 1")).Error
+	})
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Employee not found"})
+			return
+		}
+		log.Println("Error marking absence:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error marking absence"})
+		return
+	}
+
+	log.Printf("Absence marked for employee %s\n", id)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Absence marked"})
 }
 
 func UpdateEmployeeStatus(c *gin.Context) {

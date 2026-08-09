@@ -5,8 +5,8 @@
     <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report | RH System</title>
-    <link rel="stylesheet" href="/css/overview.css">
+    <title>Reports | HR System</title>
+    <link rel="stylesheet" href="/css/reports.css">
 </head>
 
 <body>
@@ -14,7 +14,7 @@
         <div class="window-header">
             <div>
                 <div class="eyebrow">HR Management</div>
-                <div class="window-title">Report</div>
+                <div class="window-title">Reports</div>
             </div>
             <div class="window-status">Reports</div>
             <div class="window-controls">
@@ -65,7 +65,7 @@
                         <span>Configuration</span>
                     </a>
 
-                    <a href="/" class="nav-item">
+                    <a href="/login" class="nav-item">
                         <span class="nav-icon">↩️</span>
                         <span>Return to login</span>
                     </a>
@@ -73,11 +73,80 @@
             </aside>
 
             <main class="main-content">
-                <div class="report-empty">
-                    <a href="/report/new" class="report-create-cube" aria-label="Create report">
-                        <span class="report-create-plus">+</span>
-                    </a>
+                <div class="reports-head">
+                    <div>
+                        <div class="eyebrow">Absence tracking</div>
+                        <h1 class="reports-title">Reports</h1>
+                        <p class="reports-subtitle">Create and review absence reports for your team.</p>
+                    </div>
+                    <a href="/report/new" class="btn btn-primary btn-lg">＋ New report</a>
                 </div>
+
+                {{if .reports}}
+                <div class="report-stats">
+                    <div class="report-stat">
+                        <span class="report-stat-icon">📋</span>
+                        <div>
+                            <span class="report-stat-value">{{len .reports}}</span>
+                            <span class="report-stat-label">Reports generated</span>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <span class="report-stat-icon">+</span>
+                        <div>
+                            <span class="report-stat-value">{{.totalAbsences}}</span>
+                            <span class="report-stat-label">Total absences recorded</span>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="report-list">
+                    <div class="report-list-header">
+                        <div>
+                            <div class="eyebrow">History</div>
+                            <h2>Report history</h2>
+                        </div>
+                    </div>
+                    <div class="report-table-wrap">
+                        <table class="reports-table">
+                            <thead>
+                                <tr>
+                                    <th>Report</th>
+                                    <th>Period</th>
+                                    <th>Generated</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .reports}}
+                                <tr>
+                                    <td>
+                                        <div class="report-type">
+                                            <span class="report-type-dot"></span>
+                                            <span class="report-type-name">{{if eq .Type "absences"}}Absences{{else}}{{.Type}}{{end}}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="report-period">
+                                            {{if eq .Period "week"}}Last 7 days{{else if eq .Period "month"}}Last 30 days{{else}}Last 365 days{{end}}
+                                        </span>
+                                    </td>
+                                    <td class="report-date">{{.CreatedAt.Format "Jan 02, 2006"}}</td>
+                                    <td><span class="report-total-badge">{{.Total}}</span></td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                {{else}}
+                <div class="report-empty">
+                    <div class="report-empty-icon">＋</div>
+                    <h2>No reports yet</h2>
+                    <p>Generate your first absence report to start tracking time off across your team.</p>
+                    <a href="/report/new" class="btn btn-primary">Create your first report</a>
+                </div>
+                {{end}}
             </main>
         </div>
     </div>

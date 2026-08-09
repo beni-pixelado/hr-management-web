@@ -13,7 +13,7 @@
 
 <br/>
 
-> A full-stack HR candidate management platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — featuring department management, a modern dark UI[...]
+> A full-stack HR candidate management platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — featuring department management, a landing page, live overview analytics, reports, account configuration, password recovery, and a modern dark UI.
 
 <br/>
 
@@ -72,9 +72,17 @@ The result is an application that is **portable, easy to extend, and ready for c
 
 **Search Engine** provides multi-field, case-insensitive, server-side search across name, position, and email — with pagination preservation and URL-bookmarkable results.
 
-**Dashboard Metrics** give HR staff a real-time snapshot of recruitment health, displaying total counts for contractors, rejected, and pending candidates via prominently styled KPI cards.
+**Dashboard Metrics** give HR staff a real-time snapshot of recruitment health, displaying total counts for contractors, rejected, and pending candidates via prominently styled KPI cards. The **Overview snapshot** highlights what's new — customization and account settings — right in the dashboard hero.
 
-**Authentication** provides user registration and login backed by session cookies, with middleware-enforced route protection across all sensitive routes.
+**Overview Analytics** provides a visual panel with two live charts: **Candidates by Department** (pie) and **New candidates over time** (line), both fed by dedicated JSON APIs.
+
+**Configuration & Account Management** lets users manage their profile (username, email, profile photo), change their password, and view device details — with server-side validation and a danger zone to permanently delete the account.
+
+**Reports** allow HR staff to create and view report records from the overview module.
+
+**Landing Page** is a marketing-grade entry point (`/`) introducing the product ("Staffio") with a hero, an animated pipeline mock, product showcase, and ownership-focused copy.
+
+**Authentication** provides user registration, login, and password recovery (with reset e-mail) backed by session cookies, with middleware-enforced route protection across all sensitive routes.
 
 **ID Card View** renders a formatted candidate profile card per employee — print-friendly and suitable for sharing.
 
@@ -101,7 +109,19 @@ Ghost button: border-only      →  de-emphasized without hidden
 
 ### Dashboard
 
-The dashboard is the command center. It uses a sidebar navigation on the left with icon+label pairs and active-state highlighting. The main content area displays KPI cards (Contractors, Rejected,[...]
+The dashboard is the command center. It uses a sidebar navigation on the left with icon+label pairs and active-state highlighting. The main content area displays KPI cards (Contractors, Rejected,[...] The hero includes an **Overview snapshot** — a live summary block that announces recent updates (e.g. *"Personalize freely."* with a *"New customization settings and account settings."* note).
+
+### Landing Page
+
+The `/` route serves a product landing page ("Staffio") built around the design system: a fixed topbar with login/register CTAs, a hero with oversized type, a signature **pipeline section** with animated candidate chips (Applied → Interview → Hired), a dashboard screenshot showcase, and an ownership section.
+
+### Overview & Charts
+
+The overview page renders two live charts using Chart.js: a **pie** of candidates per department and a **line** of new candidates over time. Both are backed by `/api/overview/*` endpoints scoped to the logged-in account.
+
+### Configuration Pages
+
+Account and device settings share a consistent card layout: profile photo upload, profile form, password change, and account deletion — each with its own validated endpoint.
 
 ### Employees Page
 
@@ -417,16 +437,31 @@ hr-management-web/
 │   │   └── database.go             # GORM + PostgreSQL connection init
 │   │
 │   ├── handlers/
-│   │   ├── auth.go                 # Login, register, logout handlers
+│   │   ├── auth.go                 # Login, register, recover, logout handlers
 │   │   ├── employee.go             # Candidate CRUD + search + status
-│   │   └── departament.go          # Department CRUD handlers
+│   │   ├── departament.go          # Department CRUD handlers
+│   │   ├── overview.go             # Overview page + charts JSON APIs
+│   │   ├── config.go               # Account/device config handlers
+│   │   ├── report.go               # Report creation/list handlers
+│   │   └── password_reset_token.go # Password reset flow
 │   │
 │   └── templates/
+│       ├── landing.html
 │       ├── login.html
 │       ├── register.html
+│       ├── recover.html
+│       ├── reset-password.html
 │       ├── dashboard.html
 │       ├── employees.html
+│       ├── employee-edit.html
 │       ├── departments.html
+│       ├── department.html
+│       ├── overview.html
+│       ├── report.html
+│       ├── report-new.html
+│       ├── config.html
+│       ├── account.html
+│       ├── device.html
 │       └── id-card.html
 │
 ├── internal/
@@ -434,18 +469,25 @@ hr-management-web/
 │   │   └── session.go              # Session read/write helpers
 │   ├── db/
 │   │   └── db.go                   # GORM + PostgreSQL connection
+│   ├── storage/
+│   │   └── ...                     # Cloudinary upload/destroy helpers
 │   └── middleware/
 │       └── auth.go                 # RequireAuth + RedirectIfAuthenticated
 │
 ├── frontend/
-│   └── css/
-│       ├── style.css               # Global reset
-│       ├── login.css
-│       ├── register.css
-│       ├── dashboard.css
-│       ├── employees.css
-│       ├── departments.css
-│       └── id-card.css
+│   ├── css/
+│   │   ├── style.css               # Global reset
+│   │   ├── landing.css
+│   │   ├── login.css
+│   │   ├── register.css
+│   │   ├── dashboard.css
+│   │   ├── employees.css
+│   │   ├── departments.css
+│   │   ├── overview.css
+│   │   ├── config.css
+│   │   └── id-card.css
+│   ├── static/                     # favicon + screenshot assets
+│   └── public/js/                  # chart + dark-mode scripts
 │
 ├── data/
 │   └── users.db                    # SQLite file (legacy / local dev)
@@ -516,6 +558,22 @@ DATABASE_URL=postgres://user:password@host/dbname?sslmode=require
 
 # Secret key for signing session cookies — use a long random string
 SESSION_SECRET=your-super-secret-key-min-32-chars
+
+# Cloudinary credentials (profile/employee photos)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# SMTP for password recovery e-mail
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_EMAIL=you@example.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=you@example.com
+SMTP_FROM_NAME=Staffio
+
+# Base URL used in password reset links (falls back to request host)
+SITE_URL=http://localhost:8000
 
 # Server port (optional, defaults to 8000)
 PORT=8000
@@ -615,20 +673,44 @@ DATABASE_URL="postgres://..." go run ./backend/cmd/seed_employee
 
 | Method | Route | Auth Required | Description |
 |---|---|---|---|
-| `GET` | `/` | No | Redirect to `/login` |
+| `GET` | `/` | No | Landing page ("Staffio") |
 | `GET` | `/login` | No | Login page |
 | `POST` | `/login` | No | Process login |
 | `GET` | `/register` | No | Registration page |
 | `POST` | `/register` | No | Create account |
+| `GET` | `/recuperateaccount` | No | Password recovery form |
+| `POST` | `/recuperateaccount` | No | Send recovery e-mail |
+| `GET` | `/reset-password` | No | Reset password page |
+| `POST` | `/reset-password` | No | Process password reset |
 | `GET` | `/logout` | Yes | Destroy session |
-| `GET` | `/dashboard` | Yes | Metrics overview + employee grid |
-| `GET` | `/employees` | Yes | Candidate list (`?q=` and `?page=`) |
+| `GET` | `/dashboard` | Yes | Metrics overview + employee grid (`?search=`/`?all=`) |
+| `GET` | `/overview` | Yes | Overview page with live charts |
+| `GET` | `/api/overview/departments` | Yes | Candidates per department (JSON) |
+| `GET` | `/api/overview/employees` | Yes | New candidates over time (JSON) |
+| `GET` | `/employees` | Yes | Candidate list (`?status=` and `?page=`) |
 | `POST` | `/employees` | Yes | Create new candidate |
+| `GET` | `/employees/:id/edit` | Yes | Candidate edit form |
+| `POST` | `/employees/:id/edit` | Yes | Update candidate |
 | `POST` | `/employees/:id/status` | Yes | Update candidate status |
-| `DELETE` | `/employees/:id` | Yes | Delete candidate |
-| `GET` | `/employees/:id/card` | Yes | Candidate ID card view |
+| `DELETE` | `/employees/:id` | Yes | Delete candidate (JSON) |
+| `POST` | `/employees/:id/delete` | Yes | Delete candidate (form) |
+| `GET` | `/badge/:id` | Yes | Candidate ID card view |
 | `GET` | `/department` | Yes | Department list + creation form |
 | `POST` | `/department` | Yes | Create new department |
+| `GET` | `/department/:id` | Yes | Department detail + members |
+| `POST` | `/department/:id/add_employee` | Yes | Assign employee to department |
+| `POST` | `/department/:id/remove_employee` | Yes | Remove employee from department |
+| `POST` | `/department/:id/delete` | Yes | Delete department |
+| `GET` | `/report` | Yes | Report list |
+| `GET` | `/report/new` | Yes | Report creation form |
+| `POST` | `/report/new` | Yes | Create report |
+| `GET` | `/config` | Yes | Configuration menu |
+| `GET` | `/config/account` | Yes | Account settings page |
+| `POST` | `/config/account/profile` | Yes | Update username/email |
+| `POST` | `/config/account/photo` | Yes | Upload profile photo |
+| `POST` | `/config/account/password` | Yes | Change password |
+| `POST` | `/config/account/delete` | Yes | Delete account |
+| `GET` | `/config/device` | Yes | Device settings page |
 
 ---
 
@@ -666,31 +748,35 @@ Tests run against an isolated test database instance. The `jordanlewis/gcassert`
 
 ## 🗺️ Roadmap
 
-### v1.1 — Current (Quality of Life)
-- [x] Multi-field search with PostgreSQL `ILIKE`
-- [x] Pagination for the candidates table
-- [x] Redesigned UI with modern design system
-- [x] Session-based authentication with gorilla/sessions
-- [x] Department creation and listing module
+A realistic, free-tier-only, time-boxed plan for a solo developer. See the full plan in [`docs/roadmap.md`](./docs/roadmap.md).
 
-### v3.0 — Control (New Functions)
-- [x] Department deletion
-- [x] Add / remove collaborators from departments
-- [ ] Overview
-- [ ] Account management (change password, deactivate)
+### ✅ Shipped
+- [x] Candidate CRUD, search, pagination, status pipeline, ID card
+- [x] Departments: create, list, detail, delete, add/remove members
+- [x] Overview analytics (live charts) + reports
+- [x] Account management (profile, photo, password, delete)
+- [x] Session auth + password recovery + landing page
 
-### 3.5 - multiple acess
-- [] Multiple views (manager, employee, and others)
-- [] Reports
+### Phase 1 — Make it safe & sellable (weeks 1–4)
+- [ ] RBAC (Admin / Recruiter / Viewer)
+- [ ] CSRF protection + rate limiting on auth routes
+- [ ] Remove dev leftovers (`/debug/cookie`)
 
-### v4.0 — Enhanced Data Model
-- [ ] Candidate notes and comments
-- [ ] Interview scheduling and date tracking
-- [ ] Department and team assignment
-- [ ] Audit trail for status change history
+### Phase 2 — Core recruiting value (weeks 5–8)
+- [ ] Candidate notes
+- [ ] Interview scheduling + upcoming-interviews list
 
-### v5.0 — Architecture Evolution/big updates
+### Phase 3 — Dev velocity & reliability (weeks 9–12)
+- [ ] Real Go tests + GitHub Actions CI
+- [ ] Docker + Compose for local dev
+- [ ] Structured logging with `log/slog`
 
+### Phase 4 — Launch & find users (weeks 13–16)
+- [ ] Demo account, empty states, README demo link
+- [ ] Free distribution: Product Hunt, HN, dev.to, LinkedIn
+- [ ] Free analytics (GoatCounter)
+
+**Never doing (solo + $0):** Prometheus, Kubernetes, Redis, microservices, paid e-mail/monitoring. The whole stack costs **$0/month** (Neon + Render + Cloudinary + Gmail SMTP + GitHub).
 
 ---
 

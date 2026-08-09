@@ -551,6 +551,88 @@ body {
     align-items: center;
 }
 
+.absence-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.absence-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--warning-bg);
+    color: var(--warning);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.absence-flash {
+    border-radius: 10px;
+    animation: absence-flash 0.9s ease;
+}
+
+@keyframes absence-flash {
+    0% {
+        background: var(--danger-bg);
+    }
+    100% {
+        background: transparent;
+    }
+}
+
+.context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 180px;
+    padding: 6px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--danger);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.context-menu-item:hover {
+    background: var(--danger-bg);
+}
+
+.context-menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
 .actions form {
     display: flex;
     gap: 8px;
