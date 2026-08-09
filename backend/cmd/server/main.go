@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -147,20 +146,6 @@ func main() {
 				"user":           user,
 			})
 
-		})
-
-		protected.GET("/debug/cookie", func(c *gin.Context) {
-			cookie, err := c.Cookie("hr_session")
-			if err != nil {
-				c.String(http.StatusOK, "COOKIE NOT FOUNDED: %v", err)
-				return
-			}
-
-			authenticated, userID := auth.IsAuthenticated(c)
-			c.String(
-				http.StatusOK,
-				fmt.Sprintf("Cookie: %s, Autenticado: %v, UserID: %d", cookie, authenticated, userID),
-			)
 		})
 
 		protected.GET("/badge/:id", handlers.BadgeHandler)
