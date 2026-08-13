@@ -98,6 +98,13 @@
                             <span class="report-stat-label">Total absences recorded</span>
                         </div>
                     </div>
+                    <div class="report-stat">
+                        <span class="report-stat-icon">✓</span>
+                        <div>
+                            <span class="report-stat-value">{{.totalHired}}</span>
+                            <span class="report-stat-label">Total hired in reports</span>
+                        </div>
+                    </div>
                 </div>
 
                 <section class="report-list">
@@ -115,15 +122,16 @@
                                     <th>Period</th>
                                     <th>Generated</th>
                                     <th>Total</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {{range .reports}}
-                                <tr>
+                                <tr class="report-row" data-href="/report/{{.ID}}">
                                     <td>
                                         <div class="report-type">
-                                            <span class="report-type-dot"></span>
-                                            <span class="report-type-name">{{if eq .Type "absences"}}Absences{{else}}{{.Type}}{{end}}</span>
+                                            <span class="report-type-dot report-dot-{{.Type}}"></span>
+                                            <span class="report-type-name">{{if eq .Type "absences"}}Absences{{else if eq .Type "hired"}}Hired{{else}}{{.Type}}{{end}}</span>
                                         </div>
                                     </td>
                                     <td>
@@ -133,6 +141,9 @@
                                     </td>
                                     <td class="report-date">{{.CreatedAt.Format "Jan 02, 2006"}}</td>
                                     <td><span class="report-total-badge">{{.Total}}</span></td>
+                                    <td class="report-view-cell">
+                                        <a href="/report/{{.ID}}" class="btn btn-secondary btn-sm">View</a>
+                                    </td>
                                 </tr>
                                 {{end}}
                             </tbody>
@@ -151,6 +162,13 @@
         </div>
     </div>
     <script src="/js/dark-mode.js"></script>
+    <script>
+        document.querySelectorAll(".report-row").forEach(function (row) {
+            row.addEventListener("click", function () {
+                window.location.href = row.dataset.href;
+            });
+        });
+    </script>
 </body>
 
 </html>

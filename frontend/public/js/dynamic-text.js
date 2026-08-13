@@ -9,16 +9,34 @@
         var typeSelect = document.getElementById("type");
         var timeSelect = document.getElementById("time");
         var feedback = document.getElementById("time-feedback");
+        var timeLabel = document.getElementById("time-label");
 
         if (!typeSelect || !timeSelect || !feedback) return;
 
+        function endpointFor(typeValue) {
+            return typeValue === "hired"
+                ? "/api/report/hired"
+                : "/api/report/absences";
+        }
+
+        function labelFor(typeValue) {
+            return typeValue === "hired"
+                ? "Count hired in the last"
+                : "Count absences in the last";
+        }
+
         function update() {
+            var typeValue = typeSelect.value;
             var typeText = typeSelect.options[typeSelect.selectedIndex].text;
             var days = DAYS[timeSelect.value] || 7;
 
+            if (timeLabel) {
+                timeLabel.textContent = labelFor(typeValue);
+            }
+
             feedback.textContent = "Loading...";
 
-            fetch("/api/report/absences?days=" + days)
+            fetch(endpointFor(typeValue) + "?days=" + days)
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
                     feedback.textContent = "Total " + typeText.toLowerCase() + ": " + data.total + " in " + days + " days";

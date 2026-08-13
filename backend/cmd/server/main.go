@@ -169,9 +169,11 @@ func main() {
 		protected.GET("/report", handlers.ReportHandler)
 		protected.GET("/report/new", handlers.ReportNewHandler)
 		protected.POST("/report/new", handlers.CreateReportHandler)
+		protected.GET("/report/:id", handlers.ReportDetailHandler)
 		protected.GET("/api/overview/departments", handlers.OverviewDataHandlerDepartments)
 		protected.GET("/api/overview/employees", handlers.OverviewDataHandlerEmployees)
 		protected.GET("/api/report/absences", handlers.ReportAbsencesContent)
+		protected.GET("/api/report/hired", handlers.ReportHiredContent)
 
 		protected.GET("/config", handlers.ConfigPageHandler)
 		protected.GET("/config/account", handlers.AccountPageHandler)
