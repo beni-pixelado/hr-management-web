@@ -1,0 +1,1283 @@
+openapi: 3.0.0
+info:
+  title: Staffio HR Management API
+  version: 1.0.0
+  description: |
+    API do sistema de gestão de RH (Staffio). Backend em Go (Gin).
+
+    Autenticação é baseada em sessão (cookie). A maioria dos endpoints exige
+    sessão autenticada e os endpoints de escrita respeitam a hierarquia de papéis:
+    - `owner`   (dono)  – acesso total
+    - `admin`   (admin) – gerencia equipe, edita candidatos
+    - `recruit` (recrutador) – edita candidatos e departamentos, sem relatórios/visão geral
+    - `viewer`  (visualizador) – somente leitura; bloqueado para métodos não-GET
+
+    Vários endpoints renderizam páginas HTML (servidor). Apenas os endpoints
+    prefixados com `/api/` retornam JSON estruturado.
+  contact:
+    name: Staffio
+servers:
+  - url: http://localhost:8000
+    description: Servidor local
+tags:
+  - name: Auth
+    description: Autenticação, registro e recuperação de senha
+  - name: Employees
+    description: Gestão de candidatos/funcionários
+  - name: Departments
+    description: Gestão de departamentos
+  - name: Overview
+    description: Dados agregados para a visão geral (dashboard analytics)
+  - name: Reports
+    description: Relatórios de ausências, contratações e desligamentos
+  - name: Config
+    description: Configurações de conta, perfil, senha e dispositivo
+  - name: Team
+    description: Gestão de membros da organização (convites, papéis)
+  - name: Pages
+    description: Páginas renderizadas no servidor (HTML)
+  - name: API
+    description: Endpoints de dados em JSON
+
+paths:
+  # ============================ AUTH ============================
+  /login:
+    get:
+      tags: [Pages, Auth]
+      summary: Página de login
+      description: Renderiza o formulário de login (HTML).
+      responses:
+        '200':
+          description: Página de login renderizada
+          content:
+            text/html:
+              schema: { type: string }
+    post:
+      tags: [Auth]
+      summary: Autenticar usuário
+      description: Valida credenciais e cria uma sessão (cookie). Limitado a 10 requisições por minuto por IP.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username:
+                  type: string
+                  description: Nome de usuário
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '302':
+          description: Redireciona para /dashboard em caso de sucesso
+        '400':
+          description: Campos obrigatórios ausentes
+        '401':
+          description: Credenciais incorretas
+  /register:
+    get:
+      tags: [Pages, Auth]
+      summary: Página de registro
+      responses:
+        '200':
+          description: Página de registro renderizada
+          content:
+            text/html: { schema: { type: string } }
+    post:
+      tags: [Auth]
+      summary: Registrar nova conta
+      description: Cria uma organização e um usuário dono (owner). Limitado a 10 requisições por minuto por IP.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password, email]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Conta criada, redireciona para a página de login
+        '400':
+          description: Campo obrigatório ausente ou usuário já existe
+        '500':
+          description: Erro interno
+  /logout:
+    get:
+      tags: [Auth]
+      summary: Encerrar sessão
+      description: Destrói a sessão e redireciona para /login. Requer autenticação.
+      security:
+        - sessionAuth: []
+      responses:
+        '302':
+          description: Redireciona para /login
+  /recuperateaccount:
+    get:
+      tags: [Pages, Auth]
+      summary: Página de recuperação de senha
+      responses:
+        '200':
+          description: Página de recuperação renderizada
+          content:
+            text/html: { schema: { type: string } }
+    post:
+      tags: [Auth]
+      summary: Solicitar recuperação de senha
+      description: Envia e-mail com link de redefinição de senha. Limitado a 5 requisições por minuto por IP.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: E-mail de recuperação enviado (resposta idêntica se o e-mail não existir, por segurança)
+        '400':
+          description: E-mail obrigatório
+        '500':
+          description: Erro ao enviar e-mail
+  /reset-password:
+    get:
+      tags: [Pages, Auth]
+      summary: Página de redefinição de senha
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Token de redefinição recebido por e-mail
+          schema: { type: string }
+      responses:
+        '200':
+          description: Página de redefinição renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '400':
+          description: Token inválido, ausente ou expirado
+    post:
+      tags: [Auth]
+      summary: Redefinir senha
+      description: Define uma nova senha usando o token. Limitado a 5 requisições por minuto por IP.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [token, new_password, confirm_password]
+              properties:
+                token:
+                  type: string
+                new_password:
+                  type: string
+                  format: password
+                  minLength: 6
+                confirm_password:
+                  type: string
+                  format: password
+      responses:
+        '302':
+          description: Redireciona para /login em caso de sucesso
+        '400':
+          description: Token inválido/expirado ou senhas não conferem
+  /recover:
+    get:
+      tags: [Pages, Auth]
+      summary: Página de recuperação (autenticado)
+      description: Requer autenticação. Renderiza a página de recuperação.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página de recuperação renderizada
+          content:
+            text/html: { schema: { type: string } }
+
+  # ============================ LANDING / UTIL ============================
+  /:
+    get:
+      tags: [Pages]
+      summary: Landing page
+      responses:
+        '200':
+          description: Landing page renderizada
+          content:
+            text/html: { schema: { type: string } }
+  /robots.txt:
+    get:
+      tags: [Pages]
+      summary: Arquivo robots.txt
+      responses:
+        '200':
+          description: Conteúdo de robots.txt
+          content:
+            text/plain: { schema: { type: string } }
+
+  # ============================ DASHBOARD ============================
+  /dashboard:
+    get:
+      tags: [Pages]
+      summary: Dashboard
+      description: Lista candidatos da organização com busca e paginação (20 por página). Requer autenticação; recrutadores são redirecionados para /employees.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Filtra por nome ou e-mail
+          schema: { type: string }
+        - name: all
+          in: query
+          required: false
+          description: "`true` mostra todos (sem limite); `false` limita a 100.000 registros"
+          schema: { type: string, enum: ['true', 'false'] }
+      responses:
+        '200':
+          description: Dashboard renderizado
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /login se não autenticado
+
+  # ============================ EMPLOYEES ============================
+  /employees:
+    get:
+      tags: [Pages, Employees]
+      summary: Listar candidatos (página)
+      description: Página com listagem paginada e contagens por status. Requer autenticação.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: status
+          in: query
+          required: false
+          description: Filtro de status (interviewing = pending, hired = contractors)
+          schema:
+            type: string
+            enum: [all, interviewing, hired, rejected]
+            default: all
+      responses:
+        '200':
+          description: Página de candidatos renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /login se não autenticado
+    post:
+      tags: [Employees]
+      summary: Criar candidato
+      description: Cria um novo candidato (status inicial pending). Requer papel com permissão de edição (owner, admin, recruit).
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [full_name, email, position]
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                position:
+                  type: string
+                description:
+                  type: string
+                photo:
+                  type: string
+                  format: binary
+                  description: Foto opcional (JPG, PNG, GIF, WebP, máx. 5 MB)
+      responses:
+        '302':
+          description: Redireciona para /employees em caso de sucesso
+        '400':
+          description: Campos obrigatórios ausentes ou upload inválido
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão de edição
+        '500':
+          description: Erro ao salvar no banco
+  /employees/download:
+    get:
+      tags: [Employees]
+      summary: Exportar candidatos em CSV
+      description: Baixa a lista de candidatos filtrada em formato CSV. Requer autenticação.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, interviewing, hired, rejected]
+            default: all
+      responses:
+        '200':
+          description: Arquivo CSV
+          content:
+            text/csv:
+              schema: { type: string }
+        '500':
+          description: Erro ao exportar
+  /employees/{id}/edit:
+    get:
+      tags: [Pages, Employees]
+      summary: Página de edição de candidato
+      description: Renderiza o formulário de edição. Requer permissão de edição.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Página de edição renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /employees se não encontrado ou sem permissão
+    post:
+      tags: [Employees]
+      summary: Atualizar candidato
+      description: Atualiza dados do candidato e, opcionalmente, a foto. Requer permissão de edição.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [full_name, email, position]
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                position:
+                  type: string
+                description:
+                  type: string
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        '302':
+          description: Redireciona para /employees em caso de sucesso
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+  /employees/{id}/status:
+    post:
+      tags: [Employees]
+      summary: Atualizar status do candidato
+      description: Altera o status (pending/contractors/rejected) e a data de contratação. Ao rejeitar, registra um desligamento (termination). Recrutadores não podem rejeitar candidatos ligados a membros superiores.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  description: Novo status do candidato
+                  enum: [pending, contractors, rejected]
+                hire_date:
+                  type: string
+                  format: date
+                  description: Data de contratação (para status contractors)
+      responses:
+        '302':
+          description: Redireciona para /employees em caso de sucesso
+        '400':
+          description: Status obrigatório
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+  /employees/{id}/absence:
+    post:
+      tags: [Employees]
+      summary: Registrar ausência
+      description: Registra uma ausência para o candidato e incrementa o contador. Requer permissão de edição.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Ausência registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Absence marked
+        '400':
+          description: Sem permissão
+        '401':
+          description: Não autenticado
+        '404':
+          description: Candidato não encontrado
+        '500':
+          description: Erro ao registrar ausência
+  /employees/{id}:
+    delete:
+      tags: [Employees]
+      summary: Excluir candidato (API)
+      description: Exclui o candidato e registra um desligamento (termination). Remove a foto armazenada. Recrutadores não podem excluir candidatos ligados a membros superiores.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Candidato excluído
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Employee deleted successfully
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '404':
+          description: Candidato não encontrado
+        '500':
+          description: Erro ao excluir
+  /employees/{id}/delete:
+    post:
+      tags: [Employees]
+      summary: Excluir candidato (formulário)
+      description: Exclui o candidato via formulário (HTML) e redireciona. Registra desligamento e remove foto. Requer permissão de edição.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '302':
+          description: Redireciona para /employees em caso de sucesso
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '500':
+          description: Erro ao excluir
+  /badge/{id}:
+    get:
+      tags: [Pages, Employees]
+      summary: Crachá do candidato
+      description: Renderiza o crachá (ID card) do candidato. Requer autenticação.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Crachá renderizado
+          content:
+            text/html: { schema: { type: string } }
+        '404':
+          description: Candidato não encontrado
+
+  # ============================ DEPARTMENTS ============================
+  /department:
+    get:
+      tags: [Pages, Departments]
+      summary: Página de departamentos
+      description: Lista departamentos e funcionários. Recrutadores são redirecionados para /employees.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página de departamentos renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou se é recrutador
+        '500':
+          description: Erro ao buscar dados
+    post:
+      tags: [Departments]
+      summary: Criar departamento
+      description: Cria um novo departamento. Requer permissão de gestão de equipe (owner, admin).
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [code, name]
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                boss_id:
+                  type: integer
+                  description: ID do gerente (opcional)
+      responses:
+        '302':
+          description: Redireciona para /department em caso de sucesso
+        '400':
+          description: Campos obrigatórios ausentes ou ID de gerente inválido
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '500':
+          description: Erro ao salvar departamento
+  /department/{id}:
+    get:
+      tags: [Pages, Departments]
+      summary: Detalhe do departamento
+      description: Mostra o departamento, seus membros e todos os funcionários disponíveis. Recrutadores são redirecionados.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Página do departamento renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou recrutador
+        '404':
+          description: Departamento não encontrado
+  /department/{id}/add_employee:
+    post:
+      tags: [Departments]
+      summary: Adicionar funcionário ao departamento
+      description: Atribui um funcionário ao departamento. Requer permissão de atribuição (owner, admin, recruit).
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [employee_id]
+              properties:
+                employee_id:
+                  type: integer
+      responses:
+        '302':
+          description: Redireciona para /department/{id}
+        '400':
+          description: employee_id obrigatório
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '500':
+          description: Erro ao atribuir
+  /department/{id}/remove_employee:
+    post:
+      tags: [Departments]
+      summary: Remover funcionário do departamento
+      description: Desvincula um funcionário do departamento. Requer permissão de atribuição.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [employee_id]
+              properties:
+                employee_id:
+                  type: integer
+      responses:
+        '302':
+          description: Redireciona para /department/{id}
+        '400':
+          description: employee_id obrigatório
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '500':
+          description: Erro ao remover
+  /department/{id}/delete:
+    post:
+      tags: [Departments]
+      summary: Excluir departamento
+      description: Desvincula os funcionários e exclui o departamento. Requer gestão de equipe (owner, admin).
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '302':
+          description: Redireciona para /department em caso de sucesso
+        '401':
+          description: Não autenticado
+        '403':
+          description: Sem permissão
+        '500':
+          description: Erro ao excluir
+
+  # ============================ OVERVIEW ============================
+  /overview:
+    get:
+      tags: [Pages, Overview]
+      summary: Visão geral
+      description: Página de visão geral. Recrutadores são redirecionados para /employees.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página de visão geral renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou recrutador
+  /api/overview/departments:
+    get:
+      tags: [API, Overview]
+      summary: Contagem de funcionários por departamento
+      description: Retorna a contagem de funcionários agrupada por departamento. Requer autenticação.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Dados por departamento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  departments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name: { type: string }
+                        count: { type: integer }
+        '401':
+          description: Não autenticado
+  /api/overview/employees:
+    get:
+      tags: [API, Overview]
+      summary: Série de candidatos e desligados por dia
+      description: Retorna candidatos criados por dia e desligados/rejeitados por dia. Requer autenticação.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Séries temporais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  employees:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        day: { type: string }
+                        count: { type: integer }
+                  fired:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        day: { type: string }
+                        count: { type: integer }
+        '401':
+          description: Não autenticado
+        '500':
+          description: Erro na consulta
+
+  # ============================ REPORTS ============================
+  /report:
+    get:
+      tags: [Pages, Reports]
+      summary: Página de relatórios
+      description: Lista relatórios com totais de ausências, contratações e desligamentos. Recrutadores são redirecionados.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página de relatórios renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou recrutador
+  /report/new:
+    get:
+      tags: [Pages, Reports]
+      summary: Página de novo relatório
+      responses:
+        '200':
+          description: Página de novo relatório renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou recrutador
+    post:
+      tags: [Reports]
+      summary: Criar relatório
+      description: Cria um relatório de ausências, contratações ou desligamentos para um período. Recrutadores são redirecionados.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                report-type:
+                  type: string
+                  enum: [absences, hired, fired]
+                  default: absences
+                time-report:
+                  type: string
+                  enum: [week, month, year]
+                  default: week
+                  description: Período (week=7 dias, month=30, year=365)
+      responses:
+        '302':
+          description: Redireciona para /report em caso de sucesso
+        '302':
+          description: Redireciona se não autenticado ou recrutador
+  /report/{id}:
+    get:
+      tags: [Pages, Reports]
+      summary: Detalhe do relatório
+      description: Mostra o relatório com resumo textual e estatísticas. Recrutadores são redirecionados.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Página do relatório renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado, recrutador ou relatório não encontrado
+  /api/report/absences:
+    get:
+      tags: [API, Reports]
+      summary: Total de ausências em N dias
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: days
+          in: query
+          required: false
+          description: Janela em dias (padrão 7)
+          schema: { type: integer, default: 7, minimum: 1 }
+      responses:
+        '200':
+          description: Contagem de ausências
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  days: { type: integer }
+                  total: { type: integer }
+        '401':
+          description: Não autenticado
+  /api/report/hired:
+    get:
+      tags: [API, Reports]
+      summary: Total de contratações em N dias
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema: { type: integer, default: 7, minimum: 1 }
+      responses:
+        '200':
+          description: Contagem de contratações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  days: { type: integer }
+                  total: { type: integer }
+        '401':
+          description: Não autenticado
+  /api/report/fired:
+    get:
+      tags: [API, Reports]
+      summary: Total de desligamentos em N dias
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: days
+          in: query
+          required: false
+          schema: { type: integer, default: 7, minimum: 1 }
+      responses:
+        '200':
+          description: Contagem de desligamentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  days: { type: integer }
+                  total: { type: integer }
+        '401':
+          description: Não autenticado
+
+  # ============================ CONFIG / ACCOUNT ============================
+  /config:
+    get:
+      tags: [Pages, Config]
+      summary: Página de configuração
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página de configuração renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /login se não autenticado
+  /config/account:
+    get:
+      tags: [Pages, Config]
+      summary: Página da conta
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página da conta renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /login se não autenticado
+  /config/device:
+    get:
+      tags: [Pages, Config]
+      summary: Página do dispositivo
+      description: Mostra o navegador e plataforma detectados pelo User-Agent.
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página do dispositivo renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona para /login se não autenticado
+  /config/account/profile:
+    post:
+      tags: [Config]
+      summary: Atualizar perfil
+      description: Atualiza nome de usuário e e-mail.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, email]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Perfil atualizado
+          content:
+            text/html: { schema: { type: string } }
+        '400':
+          description: Campos obrigatórios ausentes ou dados em uso
+        '500':
+          description: Erro ao atualizar
+  /config/account/photo:
+    post:
+      tags: [Config]
+      summary: Atualizar foto de perfil
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Foto atualizada
+          content:
+            text/html: { schema: { type: string } }
+        '400':
+          description: Nenhuma foto selecionada ou upload inválido
+        '500':
+          description: Erro ao atualizar
+  /config/account/password:
+    post:
+      tags: [Config]
+      summary: Alterar senha
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [current_password, new_password, confirm_password]
+              properties:
+                current_password:
+                  type: string
+                  format: password
+                new_password:
+                  type: string
+                  format: password
+                confirm_password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Senha alterada
+          content:
+            text/html: { schema: { type: string } }
+        '400':
+          description: Senha atual incorreta ou senhas não conferem
+        '500':
+          description: Erro ao alterar senha
+  /config/account/delete:
+    post:
+      tags: [Config]
+      summary: Excluir conta
+      description: Exclui a conta após validar a senha e encerra a sessão.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [current_password]
+              properties:
+                current_password:
+                  type: string
+                  format: password
+      responses:
+        '302':
+          description: Redireciona para /register em caso de sucesso
+        '400':
+          description: Senha incorreta
+        '500':
+          description: Erro ao excluir conta
+
+  # ============================ TEAM ============================
+  /team:
+    get:
+      tags: [Pages, Team]
+      summary: Página da equipe
+      description: Lista os membros da organização. Requer gestão de equipe (owner, admin).
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Página da equipe renderizada
+          content:
+            text/html: { schema: { type: string } }
+        '302':
+          description: Redireciona se não autenticado ou sem permissão
+  /team/invite:
+    post:
+      tags: [Team]
+      summary: Convidar membro
+      description: Cria (ou atualiza o papel de) um membro por e-mail e envia credenciais por e-mail. Requer gestão de equipe.
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  description: Papel atribuído (owner pode atribuir admin)
+                  enum: [recruit, viewer, admin]
+      responses:
+        '302':
+          description: Redireciona para /team em caso de sucesso
+        '400':
+          description: E-mail obrigatório, papel inválido ou e-mail em outra empresa
+        '500':
+          description: Erro ao criar/atualizar membro
+  /team/{id}/role:
+    post:
+      tags: [Team]
+      summary: Alterar papel do membro
+      description: Altera o papel de um membro. Requer gestão de equipe; regras de hierarquia aplicadas.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  type: string
+                  enum: [recruit, viewer, admin]
+      responses:
+        '302':
+          description: Redireciona para /team em caso de sucesso
+  /team/{id}/remove:
+    post:
+      tags: [Team]
+      summary: Remover membro
+      description: Remove um membro e reassina seus registros ao membro atuante. Requer gestão de equipe.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '302':
+          description: Redireciona para /team em caso de sucesso
+  /team/{id}/transfer:
+    post:
+      tags: [Team]
+      summary: Transferir propriedade
+      description: Transfere o papel de owner para outro membro, tornando o atual em admin. Somente owner.
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '302':
+          description: Redireciona para /team em caso de sucesso
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+      description: Cookie de sessão definido pelo servidor após login
+  schemas:
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user_id:
+          type: integer
+        organization_id:
+          type: integer
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        position:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, contractors, rejected]
+        hire_date:
+          type: string
+        photo:
+          type: string
+        department_id:
+          type: integer
+        absences:
+          type: integer
+        rejected_at:
+          type: string
+          format: date-time
+          nullable: true
+    Department:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        organization_id:
+          type: integer
+        code:
+          type: string
+        name:
+          type: string
+        boss_id:
+          type: integer
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        user_id:
+          type: integer
+        organization_id:
+          type: integer
+        type:
+          type: string
+          enum: [absences, hired, fired]
+        period:
+          type: string
+          enum: [week, month, year]
+        days:
+          type: integer
+        total:
+          type: integer
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        photo:
+          type: string
+        organization_id:
+          type: integer
+        role:
+          type: string
+          enum: [owner, admin, recruit, viewer]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

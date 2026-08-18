@@ -17,6 +17,7 @@
     <div class="container">
         <h1>Create Account</h1>
         <form action="/register" method="POST">
+            {{csrfField}}
             <label for="username">User:</label>
             <input type="text" id="username" name="username" required>
 

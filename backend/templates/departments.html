@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Departments</title>
-    <link rel="stylesheet" href="/css/departments.css">
+    <link rel="stylesheet" href="/css/departments.css?v=2">
 </head>
 
 <body>
@@ -51,6 +51,12 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span>Configuration</span>
@@ -67,6 +73,7 @@
                     <h2>Add New Department</h2>
 
                     <form method="POST" action="/department" enctype="multipart/form-data" class="employee-form">
+                        {{csrfField}}
 
                         <div class="form-group">
                             <label for="name">Name:</label>

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -17,15 +17,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	ID           uint   `gorm:"primaryKey"`
-	Username     string `json:"username" gorm:"unique;not null"`
-	Password     string `json:"password"`
-	Email        string `json:"email" gorm:"unique;not null"`
-	Photo        string `json:"photo"`
-	ResetToken   string `json:"reset_token,omitempty" gorm:"column:reset_token"`
-	ResetExpires int64  `json:"reset_expires,omitempty" gorm:"column:reset_expires"`
+type Organization struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Name      string    `json:"name" gorm:"not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
+
+type User struct {
+	ID             uint   `gorm:"primaryKey"`
+	Username       string `json:"username" gorm:"unique;not null"`
+	Password       string `json:"password"`
+	Email          string `json:"email" gorm:"unique;not null"`
+	Photo          string `json:"photo"`
+	ResetToken     string `json:"reset_token,omitempty" gorm:"column:reset_token"`
+	ResetExpires   int64  `json:"reset_expires,omitempty" gorm:"column:reset_expires"`
+	OrganizationID uint   `json:"organization_id" gorm:"index;default:0"`
+	Role           string `json:"role" gorm:"not null;default:'owner'"`
+}
+
+const (
+	RoleOwner   = "owner"
+	RoleAdmin   = "admin"
+	RoleRecruit = "recruit"
+	RoleViewer  = "viewer"
+)
 
 func Register(c *gin.Context) {
 	username := c.PostForm("username")
@@ -45,24 +60,43 @@ func Register(c *gin.Context) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Error hashing password:", err)
+		slog.Error("Error hashing password", "error", err)
 		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Internal error"})
 		return
 	}
 
-	newUser := User{Username: username, Password: string(hashedPassword), Email: email}
-	if err := DB.Create(&newUser).Error; err != nil {
-		log.Println("Error creating user:", err)
+	tx := DB.Begin()
+
+	org := Organization{Name: email}
+	if err := tx.Create(&org).Error; err != nil {
+		tx.Rollback()
+		slog.Error("Error creating organization", "error", err)
 		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Error creating account"})
 		return
 	}
+
+	newUser := User{
+		Username:       username,
+		Password:       string(hashedPassword),
+		Email:          email,
+		OrganizationID: org.ID,
+		Role:           RoleOwner,
+	}
+	if err := tx.Create(&newUser).Error; err != nil {
+		tx.Rollback()
+		slog.Error("Error creating user", "error", err)
+		c.HTML(http.StatusInternalServerError, "register.html", gin.H{"error": "Error creating account"})
+		return
+	}
+
+	tx.Commit()
 
 	c.HTML(http.StatusOK, "login.html", gin.H{"success": "Account created successfully! Log in."})
 }
 
 func Logout(c *gin.Context) {
 	if err := auth.DestroySession(c); err != nil {
-		log.Println("Error destroying session:", err)
+		slog.Error("Error destroying session", "error", err)
 	}
 
 	c.Redirect(http.StatusFound, "/login")
@@ -90,12 +124,12 @@ func Login(c *gin.Context) {
 	}
 
 	if err := auth.CreateSession(c, user.ID); err != nil {
-		log.Println("Error creating the session:", err)
+		slog.Error("Error creating session", "error", err)
 		c.HTML(http.StatusInternalServerError, "login.html", gin.H{"error": "Internal error creating session"})
 		return
 	}
 
-	log.Printf(" Session has been created for UserID: %d | Username: %s", user.ID, user.Username)
+	slog.Info("Session created", "user_id", user.ID, "username", user.Username)
 
 	c.Redirect(http.StatusFound, "/dashboard")
 }
@@ -123,7 +157,7 @@ func RecoverAccount(c *gin.Context) {
 	resetRecord := createPasswordResetToken(user.Email, token, expiresAt)
 
 	if err := DB.Create(resetRecord).Error; err != nil {
-		log.Println("Error saving reset code:", err)
+		slog.Error("Error saving reset code", "error", err)
 		c.HTML(http.StatusInternalServerError, "recover.html", gin.H{"error": "Internal error, try again"})
 		return
 	}
@@ -201,7 +235,7 @@ func RecoverAccount(c *gin.Context) {
 `, resetLink)
 
 	if err := sendEmail(user.Email, "Password recovery", html); err != nil {
-		log.Println("Error sending recovery email:", err)
+		slog.Error("Error sending recovery email", "error", err)
 		c.HTML(http.StatusInternalServerError, "recover.html", gin.H{"error": "Error sending recovery email"})
 		return
 	}
@@ -299,20 +333,20 @@ func ResetPassword(c *gin.Context) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Error hashing password:", err)
+		slog.Error("Error hashing password", "error", err)
 		c.HTML(http.StatusInternalServerError, "reset-password.html", gin.H{"error": "Internal error, try again"})
 		return
 	}
 
 	user.Password = string(hashedPassword)
 	if err := DB.Save(&user).Error; err != nil {
-		log.Println("Error saving new password:", err)
+		slog.Error("Error saving new password", "error", err)
 		c.HTML(http.StatusInternalServerError, "reset-password.html", gin.H{"error": "Internal error, try again"})
 		return
 	}
 
 	if err := DB.Delete(&resetRecord).Error; err != nil {
-		log.Println("Error deleting reset record:", err)
+		slog.Error("Error deleting reset record", "error", err)
 	}
 
 	c.Redirect(http.StatusFound, "/login")

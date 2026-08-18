@@ -17,6 +17,7 @@
         <h1>Recover Account</h1>
 
         <form action="/recuperateaccount" method="POST">
+            {{csrfField}}
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" placeholder="your@email.com" required>
 

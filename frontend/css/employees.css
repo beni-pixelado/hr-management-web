@@ -253,6 +253,7 @@ body {
 
 .main-content {
     flex: 1;
+    min-width: 0;
     padding: 26px;
     background: linear-gradient(180deg, var(--main-grad-1), var(--main-grad-2));
 }
@@ -445,10 +446,12 @@ body {
 
 .employees-table-wrapper {
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .employees-table {
     width: 100%;
+    min-width: 900px;
     border-collapse: collapse;
 }
 

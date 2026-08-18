@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Department - {{.Department.Name}}</title>
-    <link rel="stylesheet" href="/css/departments.css">
+    <link rel="stylesheet" href="/css/departments.css?v=2">
 </head>
 
 <body>
@@ -55,6 +55,12 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span>Configuration</span>
@@ -85,6 +91,7 @@
                     </div>
 
                     <form method="POST" action="/department/{{.Department.ID}}/add_employee" class="employee-form">
+                        {{csrfField}}
                         <div class="form-group-full">
                             <label for="employee_id">Add Employee to Department</label>
                             <select name="employee_id" id="employee_id" class="form-select">
@@ -99,6 +106,7 @@
                     </form>
 
                     <form method="POST" action="/department/{{.Department.ID}}/delete" onsubmit="return confirm('Delete this department?')" class="delete-form">
+                        {{csrfField}}
                         <button type="submit" class="danger">Delete Department</button>
                     </form>
                 </section>
@@ -119,6 +127,7 @@
                                 <div class="member-actions">
                                     <a href="/badge/{{.ID}}" class="btn btn-primary">View Badge</a>
                                     <form method="POST" action="/department/{{$.Department.ID}}/remove_employee" onsubmit="return confirm('Remove this employee from department?')">
+                                        {{csrfField}}
                                         <input type="hidden" name="employee_id" value="{{.ID}}">
                                         <button type="submit" class="danger">Remove</button>
                                     </form>

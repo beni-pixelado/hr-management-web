@@ -29,6 +29,7 @@
                     <span class="user-photo-nav user-photo-fallback">{{slice .User.Username 0 1}}</span>
                     {{end}}
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
@@ -38,12 +39,14 @@
                         <span class="nav-icon">📈</span>
                         <span>Overview</span>
                     </a>
+                    {{end}}
 
                     <a href="/employees" class="nav-item">
                         <span class="nav-icon">👥</span>
                         <span>Manage Candidates</span>
                     </a>
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
@@ -53,6 +56,14 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
+
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
+                    {{end}}
 
                     <a href="/config" class="nav-item active">
                         <span class="nav-icon">⚙️</span>
@@ -99,6 +110,7 @@
                             </div>
 
                             <form method="POST" action="/config/account/photo" enctype="multipart/form-data" class="config-form photo-form">
+                                {{csrfField}}
                                 <div class="form-group">
                                     <label for="photo">Choose a photo</label>
                                     <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/gif,image/webp" required>
@@ -116,6 +128,7 @@
                         </div>
 
                         <form method="POST" action="/config/account/profile" class="config-form">
+                            {{csrfField}}
                             <div class="form-group">
                                 <label for="username">Username</label>
                                 <input type="text" id="username" name="username" value="{{.User.Username}}" required>
@@ -139,6 +152,7 @@
                         </div>
 
                         <form method="POST" action="/config/account/password" class="config-form">
+                            {{csrfField}}
                             <div class="form-group">
                                 <label for="current_password">Current password</label>
                                 <input type="password" id="current_password" name="current_password" required>
@@ -190,6 +204,7 @@
                     </div>
 
                     <form method="POST" action="/config/account/delete" class="config-form">
+                        {{csrfField}}
                         <div class="form-group">
                             <label for="current_password">Confirm your password</label>
                             <input type="password" id="current_password" name="current_password" required>

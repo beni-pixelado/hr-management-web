@@ -59,7 +59,12 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
-
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span>Configuration</span>
@@ -83,6 +88,7 @@
                 </div>
 
                 <form class="report-form" method="POST" action="/report/new">
+                    {{csrfField}}
                     <div class="report-form-grid">
                         <section class="report-card">
                             <div class="report-card-head">
@@ -98,6 +104,7 @@
                                     <select id="type" name="report-type">
                                         <option value="absences">Absences</option>
                                         <option value="hired">Hired</option>
+                                        <option value="fired">Fired</option>
                                     </select>
                                 </div>
                             </div>

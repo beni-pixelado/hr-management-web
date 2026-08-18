@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -65,16 +64,7 @@ func IsAuthenticated(c *gin.Context) (bool, uint) {
 		return false, 0
 	}
 
-	userID := uint(userIDValue)
-	if !ok {
-		return false, 0
-	}
-
-	fmt.Printf("AUTH VALUE: %#v\n", session.Values["authenticated"])
-	fmt.Printf("AUTH TYPE: %T\n", session.Values["authenticated"])
-
-	return true, userID
-
+	return true, uint(userIDValue)
 }
 
 func DestroySession(c *gin.Context) error {

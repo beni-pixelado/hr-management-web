@@ -1,341 +1,84 @@
 <div align="center">
 
-# 🏢 HR Management Web
+# 🏢 Staffio — HR Management Web
 
-### A production-minded Human Resources Management System built with Go, Gin, PostgreSQL and Gorilla Sessions
+### A production-minded, multi-tenant Human Resources Management System
 
-[![Latest Release](https://img.shields.io/github/v/release/beni-pixelado/hr-management-web?style=for-the-badge&logo=github&logoColor=blue)](https://github.com/beni-pixelado/hr-management-web/releases)
-[![Status](https://img.shields.io/badge/status-paused-grey.svg?style=for-the-badge)](https://github.com/beni-pixelado/hr-management-web)
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8.svg?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
+Go · Gin · PostgreSQL (Neon) · Gorilla Sessions
+
+[![Go](https://img.shields.io/badge/Go-1.25-00ADD8.svg?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
 [![Gin](https://img.shields.io/badge/Gin-1.12-008ECF.svg?style=for-the-badge&logo=go&logoColor=white)](https://gin-gonic.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
+[![CI](https://github.com/beni-pixelado/hr-management-web/actions/workflows/ci.yml/badge.svg)](https://github.com/beni-pixelado/hr-management-web/actions)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](./LICENSE)
 
-<br/>
-
-> A full-stack HR candidate management platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — featuring department management, a landing page, live overview analytics, reports, account configuration, password recovery, and a modern dark UI.
-
-<br/>
-
-[Overview](#-overview) · [Features](#-features) · [New UI](#-new-ui--design-system) · [Department Management](#-department-management) · [Search Engine](#-search-engine) · [Database](#-sqlite[...]
-
 </div>
+
+<br/>
+
+> **Staffio** is a full-stack Human Resources platform that streamlines the recruitment pipeline — from candidate intake to final status resolution — with department management, live analytics, reports, team collaboration with role-based access, account configuration, password recovery, and a modern dark UI. Designed to run entirely on **$0/month** infrastructure.
+
+<br/>
+
+## ✨ Highlights
+
+- **Multi-tenant by design** — every organization is isolated; teams collaborate with RBAC
+- **Roles & permissions** — Owner / Admin / Recruit / Viewer
+- **Candidate pipeline** — pending → hired / rejected, with status analytics
+- **Departments** — organizational structure and member management
+- **Live analytics** — pie & line charts backed by JSON APIs
+- **Reports** — absences, hires and firings over configurable periods
+- **Secure by default** — CSRF protection, rate limiting, bcrypt, HMAC-signed sessions
+- **$0/month stack** — Neon + Render + Cloudinary + Gmail SMTP + GitHub Actions
 
 ---
 
 ## 📋 Table of Contents
 
-- [Overview](#-overview)
+- [Screenshots](#-screenshots)
 - [Features](#-features)
-- [New UI & Design System](#-new-ui--design-system)
-- [Department Management](#-department-management)
-- [Search Engine](#-search-engine)
-- [SQLite → PostgreSQL via Neon](#-sqlite--postgresql-via-neon)
-- [Authentication & Session Management](#-authentication--session-management)
 - [Tech Stack](#-tech-stack)
 - [Architecture](#-architecture)
-- [Project Structure](#-project-structure)
-- [Candidate Lifecycle](#-candidate-lifecycle)
-- [Installation](#-installation)
+- [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
-- [Running Locally](#-running-locally)
-- [API Routes](#-api-routes)
-- [CLI Utilities](#-cli-utilities)
+- [Docker](#-docker)
 - [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Documentation](#-documentation)
 - [Roadmap](#-roadmap)
 - [License](#-license)
 
 ---
 
-## 🔍 Overview
+## 📸 Screenshots
 
-**HR Management Web** is a self-contained Human Resources platform built in Go, designed to manage candidate pipelines and organizational structure with clarity, efficiency, and scalability. The s[...]
+| Dashboard | Candidates |
+|---|---|
+| ![Dashboard](./frontend/static/rh-dashboard.png) | ![Candidates](./frontend/static/rh-login.png) |
 
-The architecture follows a clean separation of concerns: the `backend/` layer handles HTTP routing and business logic through dedicated handlers, `internal/` packages encapsulate cross-cutting con[...]
-
-The result is an application that is **portable, easy to extend, and ready for cloud deployment** — with zero client-side framework complexity and a Go binary as the single deployable artifact.
+> More visuals live in [`frontend/static/`](./frontend/static/).
 
 ---
 
 ## ✨ Features
 
-**Candidate Management** covers adding new candidates with name, job position, email, and optional profile photo upload. Photos are stored in `uploads/` and served statically, with an automatic fa[...]
+**Candidate Management** — add candidates with name, position, email, description and an optional profile photo (uploaded to Cloudinary). Full CRUD, a three-state status pipeline (`pending` → `contractors`/`rejected`), pagination, and a print-friendly ID card.
 
-**Department Management** allows HR teams to organize their workforce into departments. Each department has a name, a unique code, and an optional assigned manager. The module supports:
-- Creating new departments via a form with name, code, and manager selection
-- Listing all departments in a visual card grid
-- Assigning a manager (selected from existing employees/candidates)
-- Deleting departments
-- Adding and removing collaborators from departments
+**Search & Export** — server-side, case-insensitive search across name and email, status filtering, pagination, and one-click CSV export of the filtered set.
 
-**Status Pipeline** implements a three-state system (`Pending` → `Contractors` / `Rejected`) that is manually controlled by HR staff. Status changes are reflected immediately across both the tab[...]
+**Department Management** — organize your workforce into departments with a name, unique code and optional manager; assign and remove collaborators.
 
-**Search Engine** provides multi-field, case-insensitive, server-side search across name, position, and email — with pagination preservation and URL-bookmarkable results.
+**Live Analytics** — an overview with two live charts: **Candidates by Department** (pie) and **New candidates over time** (line), fed by dedicated JSON APIs scoped to your organization.
 
-**Dashboard Metrics** give HR staff a real-time snapshot of recruitment health, displaying total counts for contractors, rejected, and pending candidates via prominently styled KPI cards. The **Overview snapshot** highlights what's new — customization and account settings — right in the dashboard hero.
+**Reports** — capture snapshot metrics for absences, hires and firings over week/month/year periods, each rendered with a human-readable narrative and stats.
 
-**Overview Analytics** provides a visual panel with two live charts: **Candidates by Department** (pie) and **New candidates over time** (line), both fed by dedicated JSON APIs.
+**Team & Roles (RBAC)** — invite teammates with temporary credentials, assign roles (Owner/Admin/Recruit/Viewer), change or remove members, and transfer ownership. Permissions are enforced at both middleware and handler level.
 
-**Configuration & Account Management** lets users manage their profile (username, email, profile photo), change their password, and view device details — with server-side validation and a danger zone to permanently delete the account.
+**Account & Device Management** — manage your profile, profile photo, change your password, review device details, and delete your account.
 
-**Reports** allow HR staff to create and view report records from the overview module.
+**Authentication & Recovery** — session-based auth with bcrypt hashing, CSRF protection, per-IP rate limiting, and e-mail password recovery with single-use tokens.
 
-**Landing Page** is a marketing-grade entry point (`/`) introducing the product ("Staffio") with a hero, an animated pipeline mock, product showcase, and ownership-focused copy.
-
-**Authentication** provides user registration, login, and password recovery (with reset e-mail) backed by session cookies, with middleware-enforced route protection across all sensitive routes.
-
-**ID Card View** renders a formatted candidate profile card per employee — print-friendly and suitable for sharing.
-
----
-
-## 🎨 New UI & Design System
-
-One of the most significant improvements in v1.1 is a complete visual overhaul. The new design system introduces a modern aesthetic that prioritizes readability, structure, and user confidence.
-
-### Design Philosophy
-
-The interface was designed around three principles: **clarity** (every element has a clear purpose and visual weight), **density** (HR tools are data-heavy — the layout maximizes information per[...]
-
-### Login Page
-
-The login screen features a soft light-gray gradient background (`#e2e8f0`) with a centered white card (`border-radius: 24px`, layered `box-shadow`). The form uses uppercase field labels, rounded [...]
-
-```
-Background: #e2e8f0 gradient  →  calm, enterprise feel
-Card: white + shadow           →  focus isolation
-Primary button: #3f51b5        →  brand indigo, high contrast
-Ghost button: border-only      →  de-emphasized without hidden
-```
-
-### Dashboard
-
-The dashboard is the command center. It uses a sidebar navigation on the left with icon+label pairs and active-state highlighting. The main content area displays KPI cards (Contractors, Rejected,[...] The hero includes an **Overview snapshot** — a live summary block that announces recent updates (e.g. *"Personalize freely."* with a *"New customization settings and account settings."* note).
-
-### Landing Page
-
-The `/` route serves a product landing page ("Staffio") built around the design system: a fixed topbar with login/register CTAs, a hero with oversized type, a signature **pipeline section** with animated candidate chips (Applied → Interview → Hired), a dashboard screenshot showcase, and an ownership section.
-
-### Overview & Charts
-
-The overview page renders two live charts using Chart.js: a **pie** of candidates per department and a **line** of new candidates over time. Both are backed by `/api/overview/*` endpoints scoped to the logged-in account.
-
-### Configuration Pages
-
-Account and device settings share a consistent card layout: profile photo upload, profile form, password change, and account deletion — each with its own validated endpoint.
-
-### Employees Page
-
-The employees page combines a filterable table with status badges color-coded as chips — green, red, and amber — providing instant visual feedback. Profile photos appear as rectangular thumbn[...]
-
-### Departments Page
-
-The departments page presents created departments in a responsive card grid. Each card shows the department name, a colored code badge, and the assigned manager ID. The creation form includes a s[...]
-
-### Responsiveness
-
-All pages are built with relative units (`rem`, `%`, `vh`) and CSS media queries. The sidebar collapses to a top navigation bar on narrow viewports, and table views gracefully reduce to card-only[...]
-
----
-
-## 🗂️ Department Management
-
-The department module is one of the core v1.1 additions. It allows HR teams to create organizational structure alongside the candidate pipeline.
-
-### How It Works
-
-Departments are independent entities. Each has a `name`, a unique `code`, and an optional `boss_id` referencing an employee. The module is exposed at the `/department` route with both GET (list +[...]
-
-```go
-type Department struct {
-    ID     uint   `gorm:"primaryKey"`
-    Code   string `gorm:"not null"`
-    Name   string `gorm:"not null"`
-    BossID uint   `gorm:"column:boss"`
-}
-```
-
-### Operations
-
-**Creating a Department** — The creation form accepts a name, code, and an optional manager selected from a dropdown of all existing employees. On submission, the handler validates required fie[...]
-
-```go
-func CreatedepartmentHandler(c *gin.Context) {
-    Code   := c.PostForm("code")
-    Name   := c.PostForm("name")
-    BossID := c.PostForm("boss_id")
-    // validates, parses, inserts, redirects
-}
-```
-
-**Listing Departments** — `DepartmentPageHandler` fetches all employees (for the manager dropdown) and all departments, then renders the full departments view in a single request.
-
-**Deleting a Department** — Planned for v1.2. Will use `DELETE /department/:id`.
-
-**Adding / Removing Collaborators** — Planned for v1.2. Will introduce a join table (`department_employees`) linking the `departments` and `employees` tables many-to-many, with dedicated `POST [...]
-
-### The Departments Page
-
-The page is split into two sections: the **Add New Department** form at the top, and the **Departments Created** card grid below it. The manager select is dynamically populated from the `{{range [...]
-
----
-
-## 🔎 Search Engine
-
-The search system allows HR staff to locate candidates instantly without paginating through long lists.
-
-### How It Works
-
-Search is implemented as a server-side query on the `GET /employees` route via a `q` parameter. The handler sanitizes the input and builds a parameterized SQL query using GORM's `Where` clause ✔[...]
-
-```go
-query := DB.Model(&Employee{})
-
-if search := strings.TrimSpace(c.Query("q")); search != "" {
-    term := "%" + search + "%"
-    query = query.Where(
-        "full_name ILIKE ? OR position ILIKE ? OR email ILIKE ?",
-        term, term, term,
-    )
-}
-
-var total int64
-query.Count(&total)
-
-var employees []Employee
-query.Offset(offset).Limit(limit).Find(&employees)
-```
-
-### Multi-field Search
-
-A single search term matches across three fields simultaneously: **full name**, **position**, and **email**. Typing `"eng"` surfaces candidates named `"Enrique"`, candidates with position `"Engin[...]
-
-### Frontend Integration
-
-The search input is a plain HTML `<form>` with `method="get"`. Submitting it produces a `GET /employees?q=...` request — no JavaScript required. The `value="{{ .search }}"` binding echoes the s[...]
-
-### Pagination Integration
-
-Search integrates cleanly with pagination. Every page link preserves the `q` parameter, so navigating to page 2 of `"engineer"` results does not lose the search context. This is achieved by forwa[...]
-
-### Security
-
-Parameterized queries make SQL injection structurally impossible. The input is also `TrimSpace`'d before use. Future hardening will add a maximum length cap and rate limiting per session.
-
----
-
-## 🗄️ SQLite → PostgreSQL via Neon
-
-This migration is one of the most important architectural decisions in the project's evolution.
-
-### Why SQLite Was a Good Starting Point
-
-SQLite requires zero configuration, stores everything in a single file (`data/users.db`), and the Go driver works out of the box. For validating a data model and a UI, it's the right call. GORM's[...]
-
-### Why SQLite Becomes a Bottleneck
-
-SQLite has a single-writer constraint. In a web application with concurrent HTTP requests, writes queue behind each other. It also can't be accessed by more than one process simultaneously — ru[...]
-
-### Why PostgreSQL
-
-PostgreSQL supports true concurrent reads and writes via MVCC, full-text search operators (`ILIKE`, `tsvector`), `JSONB`, row-level locking, and a rich extension ecosystem. Its `ILIKE` operator w[...]
-
-### Why Neon
-
-[Neon](https://neon.tech) is a serverless PostgreSQL platform that provides:
-
-| Feature | Benefit |
-|---|---|
-| **Serverless scaling** | Scales to zero when idle — no cost for unused compute |
-| **Branching** | Isolated DB branches for staging/testing |
-| **Connection pooling** | Built-in PgBouncer-compatible pooler |
-| **Cloud-native** | Works with Render, Railway, Fly.io |
-| **Free tier** | Generous free tier for portfolio and small production apps |
-
-### Connection Setup in Go
-
-```go
-// internal/db/db.go
-func Connect() (*gorm.DB, error) {
-    dsn := os.Getenv("DATABASE_URL")
-    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-    if err != nil {
-        return nil, err
-    }
-
-    sqlDB, _ := db.DB()
-    sqlDB.SetMaxOpenConns(10)
-    sqlDB.SetMaxIdleConns(5)
-
-    return db, nil
-}
-```
-
-`MaxOpenConns(10)` prevents connection exhaustion on Neon's free tier. `MaxIdleConns(5)` avoids TCP+TLS reconnection overhead on every request.
-
-### Local vs Production
-
-For local development, point `DATABASE_URL` at a local PostgreSQL instance or a Neon branch. The SQLite driver remains in `go.mod` for reference and test isolation.
-
----
-
-## 🔐 Authentication & Session Management
-
-Authentication is handled via **cookie-based sessions** using `gorilla/sessions`, backed by `gorilla/securecookie` for HMAC-signed cookie values.
-
-### How Sessions Work
-
-When a user successfully logs in, the server creates a session entry, sets an authenticated flag and the user's ID inside the session store, and writes a `Set-Cookie` header. Every subsequent req[...]
-
-```go
-// internal/auth/session.go
-func CreateSession(c *gin.Context, userID uint) error {
-    session, _ := SessionStore.Get(c.Request, "hr_session")
-    session.Values["user_id"]       = int(userID)
-    session.Values["authenticated"] = true
-    session.Options = &sessions.Options{
-        Path:     "/",
-        MaxAge:   60 * 60 * 24 * 7,
-        HttpOnly: true,
-        Secure:   true,
-        SameSite: http.SameSiteLaxMode,
-    }
-    return session.Save(c.Request, c.Writer)
-}
-
-func IsAuthenticated(c *gin.Context) (bool, uint) {
-    session, err := SessionStore.Get(c.Request, "hr_session")
-    if err != nil { return false, 0 }
-    auth, ok := session.Values["authenticated"].(bool)
-    if !ok || !auth { return false, 0 }
-    userID := uint(session.Values["user_id"].(int))
-    return true, userID
-}
-```
-
-### Middleware
-
-Two middleware functions are provided in `internal/middleware/auth.go`:
-
-**`RequireAuth`** — applied to all protected routes. If the session is missing or invalid, the user is redirected to `/login` with a `302`.
-
-**`RedirectIfAuthenticated`** — applied to `/login` and `/register`. Prevents already-logged-in users from seeing the auth pages.
-
-```go
-func RequireAuth(c *gin.Context) {
-    authenticated, userID := auth.IsAuthenticated(c)
-    if !authenticated {
-        c.Redirect(http.StatusFound, "/login")
-        c.Abort()
-        return
-    }
-    c.Set("user_id", userID)
-    c.Next()
-}
-```
-
-### Security Considerations
-
-The session cookie is HMAC-signed with the `SESSION_SECRET` key — tampering is detected and the session is invalidated. Passwords are stored hashed with `bcrypt` (`golang.org/x/crypto`). HTTPS [...]
+**Landing Page** — a marketing-grade entry point with a hero, an animated pipeline mock, and product showcase.
 
 ---
 
@@ -345,200 +88,73 @@ The session cookie is HMAC-signed with the `SESSION_SECRET` key — tampering is
 
 | Technology | Version | Role |
 |---|---|---|
-| **Go** | 1.21+ | Core application language |
-| **gin-gonic/gin** | v1.12.0 | HTTP framework, routing, middleware, template rendering |
-| **gorm.io/gorm** | v1.31.1 | ORM — schema migration, query building, model binding |
-| **gorm.io/driver/postgres** | v1.6.0 | GORM PostgreSQL adapter |
+| **Go** | 1.25 | Core application language |
+| **gin-gonic/gin** | v1.12.0 | HTTP framework, routing, middleware, rendering |
+| **gorm.io/gorm** | v1.31.1 | ORM — migrations, queries, model binding |
 | **jackc/pgx/v5** | v5.6.0 | PostgreSQL wire protocol driver |
-| **jackc/puddle/v2** | v2.2.2 | Connection pool manager for pgx |
 | **gorilla/sessions** | v1.4.0 | Cookie-based session management |
-| **gorilla/securecookie** | v1.1.2 | HMAC cookie signing and optional encryption |
-| **joho/godotenv** | v1.5.1 | `.env` file loading for local development |
-| **google/uuid** | v1.6.0 | UUID generation for uploaded photo filenames |
-| **gabriel-vasile/mimetype** | v1.4.12 | MIME type detection for uploaded photos |
-| **go-playground/validator/v10** | v10.30.1 | Struct-level input validation |
+| **gorilla/securecookie** | v1.1.2 | HMAC cookie signing |
 | **golang.org/x/crypto** | v0.50.0 | `bcrypt` password hashing |
+| **cloudinary-go/v2** | v2.16.0 | Photo upload/storage |
+| **joho/godotenv** | v1.5.1 | `.env` loading |
+| **google/uuid** | v1.6.0 | UUID tokens & filenames |
+| **gabriel-vasile/mimetype** | v1.4.12 | Upload MIME detection |
 
 ### Frontend
 
 | Technology | Role |
 |---|---|
-| **HTML5 + html/template** | Server-side rendering through Gin's template engine |
-| **CSS3 (vanilla)** | Custom design system — no external CSS frameworks |
-| **JavaScript (vanilla)** | Client-side interactivity (delete confirmations, UI toggles) |
+| **HTML5 + html/template** | Server-side rendering (auto-escaping = XSS-safe) |
+| **CSS3 (vanilla)** | Custom design system, dark mode, no frameworks |
+| **JavaScript (vanilla)** | Charts (Chart.js), dark mode, UI interactions |
 
 ### Infrastructure & Tooling
 
 | Tool | Role |
 |---|---|
-| **Neon** | Serverless PostgreSQL cloud database |
-| **gorm.io/driver/sqlite** | SQLite driver (retained for local/test use) |
-| **mattn/go-sqlite3** | CGO-based SQLite3 driver |
-| **stretchr/testify** | Test assertions |
-| **go.uber.org/mock** | Mock generation for unit tests |
-| **Makefile** | Task automation (`run`, `test`, `seed`) |
+| **Neon** | Serverless PostgreSQL (free tier) |
+| **Cloudinary** | Image CDN/storage |
+| **Render** | Cloud hosting (free tier) |
+| **Gmail SMTP** | Recovery / invite e-mail |
+| **GitHub Actions** | CI (vet, test, build) |
+| **Docker + Compose** | One-command local dev |
+| **k6** | Load testing |
 
 ---
 
 ## 🏗️ Architecture
 
-The application follows a layered architecture with clear boundaries between concerns:
+Layered, server-rendered, single-binary:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                      HTTP Layer (Gin)                    │
-│          Routes · Middleware · Template Rendering         │
-└────────────────────────┬────────────────────────────────┘
-                         │
-          ┌───────────────┼──────────────┐
-          │               │              │
-          ▼               ▼              ▼
-    ┌──────────┐   ┌──────────────┐  ┌──────────────┐
-    │  auth.go │   │ employee.go  │  │departament.go│
-    │ handler  │   │   handler    │  │   handler    │
-    └────┬─────┘   └──────┬───────┘  └──────┬───────┘
-         │                │                  │
-         └────────────────┼──────────────────┘
-                          │
-                          ▼
-               ┌──────────────────────┐
-               │    internal/         │
-               │  db · auth · middle  │
-               └──────────┬───────────┘
-                          │
-                          ▼
-               ┌──────────────────────┐
-               │  Neon PostgreSQL     │
-               │  (cloud, serverless) │
-               └──────────────────────┘
+Browser (Go templates + CSS + JS)
+        │  HTTP
+        ▼
+Gin HTTP Layer (router · middleware · static · templates)
+        │
+        ▼
+Handlers (auth · employee · department · org · report · config …)
+        │
+        ▼
+internal/ (auth · csrf · middleware · storage)
+        │
+        ▼
+Neon PostgreSQL (multi-tenant)
 ```
 
-The `internal/` packages (`auth`, `db`, `middleware`) are deliberately isolated from `backend/handlers/` — handlers call internal packages but not vice versa. The database connection, session l[...]
+- **Server-rendered HTML** — one deployable binary, no frontend framework.
+- **RBAC + tenant scoping** — least privilege and data isolation by construction.
+- **Cookie sessions** — simple, revocation-friendly, no token storage.
+
+See the full breakdown in [docs/architecture.md](./docs/architecture.md).
 
 ---
 
-## 📁 Project Structure
-
-```
-hr-management-web/
-├── go.mod
-├── go.sum
-├── makefile
-│
-├── backend/
-│   ├── cmd/
-│   │   ├── server/main.go          # Application entrypoint
-│   │   ├── seed_users/main.go      # Seeds test user accounts
-│   │   ├── seed_employee/main.go   # Seeds test candidate data
-│   │   ├── list_users/main.go      # CLI: prints all users
-│   │   └── fix_sequences/main.go  # Fixes PostgreSQL serial sequences
-│   │
-│   ├── database/
-│   │   └── database.go             # GORM + PostgreSQL connection init
-│   │
-│   ├── handlers/
-│   │   ├── auth.go                 # Login, register, recover, logout handlers
-│   │   ├── employee.go             # Candidate CRUD + search + status
-│   │   ├── departament.go          # Department CRUD handlers
-│   │   ├── overview.go             # Overview page + charts JSON APIs
-│   │   ├── config.go               # Account/device config handlers
-│   │   ├── report.go               # Report creation/list handlers
-│   │   └── password_reset_token.go # Password reset flow
-│   │
-│   └── templates/
-│       ├── landing.html
-│       ├── login.html
-│       ├── register.html
-│       ├── recover.html
-│       ├── reset-password.html
-│       ├── dashboard.html
-│       ├── employees.html
-│       ├── employee-edit.html
-│       ├── departments.html
-│       ├── department.html
-│       ├── overview.html
-│       ├── report.html
-│       ├── report-new.html
-│       ├── config.html
-│       ├── account.html
-│       ├── device.html
-│       └── id-card.html
-│
-├── internal/
-│   ├── auth/
-│   │   └── session.go              # Session read/write helpers
-│   ├── db/
-│   │   └── db.go                   # GORM + PostgreSQL connection
-│   ├── storage/
-│   │   └── ...                     # Cloudinary upload/destroy helpers
-│   └── middleware/
-│       └── auth.go                 # RequireAuth + RedirectIfAuthenticated
-│
-├── frontend/
-│   ├── css/
-│   │   ├── style.css               # Global reset
-│   │   ├── landing.css
-│   │   ├── login.css
-│   │   ├── register.css
-│   │   ├── dashboard.css
-│   │   ├── employees.css
-│   │   ├── departments.css
-│   │   ├── overview.css
-│   │   ├── config.css
-│   │   └── id-card.css
-│   ├── static/                     # favicon + screenshot assets
-│   └── public/js/                  # chart + dark-mode scripts
-│
-├── data/
-│   └── users.db                    # SQLite file (legacy / local dev)
-│
-└── docs/
-    ├── architecture.md
-    ├── backend.md
-    ├── database.md
-    ├── frontend.md
-    ├── search.md
-    ├── auth.md
-    ├── departments.md
-    ├── data-flow.md
-    ├── scalability.md
-    ├── testing.md
-    └── roadmap.md
-```
-
----
-
-## 🔄 Candidate Lifecycle
-
-Every candidate registered follows a defined lifecycle with three possible states:
-
-```
-           ┌──────────────────────────────────────────┐
-           │           Candidate Registered            │
-           └───────────────────┬──────────────────────┘
-                               │
-                               ▼
-                       ┌───────────────┐
-                       │    PENDING    │  ◄── Default on creation
-                       └───────┬───────┘
-                               │
-              ┌────────────────┴────────────────┐
-              │                                 │
-              ▼                                 ▼
-      ┌───────────────┐                 ┌───────────────┐
-      │  CONTRACTORS  │                 │   REJECTED    │
-      └───────────────┘                 └───────────────┘
-```
-
-Status transitions are **bidirectional and manually controlled** — HR staff can move a candidate from any state to any other at any time.
-
----
-
-## ⚙️ Installation
+## 🚀 Getting Started
 
 ### Prerequisites
 
-Go `>= 1.21`, Git, and a PostgreSQL connection string (Neon free tier works perfectly).
+Go `>= 1.25`, Git, and a PostgreSQL connection string (Neon free tier works perfectly).
 
 ```bash
 git clone https://github.com/beni-pixelado/hr-management-web.git
@@ -546,25 +162,50 @@ cd hr-management-web
 go mod download
 ```
 
+### Configure environment
+
+```bash
+cp .env.example .env
+# then fill in DATABASE_URL, SESSION_SECRET, and service keys (see below)
+```
+
+### Run
+
+```bash
+make run
+# or: go run ./backend/cmd/server
+```
+
+Visit **http://localhost:8000**. Tables are created automatically via `AutoMigrate`.
+
+### Seed sample data *(optional)*
+
+```bash
+go run ./backend/cmd/seed_users
+go run ./backend/cmd/seed_employee
+```
+
+The full walkthrough is in [docs/getting-started.md](./docs/getting-started.md).
+
 ---
 
 ## 🔑 Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` in the project root:
 
 ```env
 # PostgreSQL connection string (Neon or local)
 DATABASE_URL=postgres://user:password@host/dbname?sslmode=require
 
-# Secret key for signing session cookies — use a long random string
-SESSION_SECRET=your-super-secret-key-min-32-chars
+# Secret for HMAC-signing session cookies — use a long random string
+SESSION_SECRET=openssl-rand-hex-32
 
-# Cloudinary credentials (profile/employee photos)
+# Cloudinary (profile & employee photos)
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
-# SMTP for password recovery e-mail
+# SMTP (password recovery + team invites)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_EMAIL=you@example.com
@@ -572,211 +213,83 @@ SMTP_PASSWORD=your-app-password
 SMTP_FROM=you@example.com
 SMTP_FROM_NAME=Staffio
 
-# Base URL used in password reset links (falls back to request host)
+# Base URL for e-mail links (falls back to request host)
 SITE_URL=http://localhost:8000
 
 # Server port (optional, defaults to 8000)
 PORT=8000
 ```
 
-For local development with a local PostgreSQL instance:
-
-```env
-DATABASE_URL=postgres://postgres:password@localhost:5432/hr_dev?sslmode=disable
-```
+For a local PostgreSQL instance: `DATABASE_URL=postgres://postgres:password@localhost:5432/hr_dev?sslmode=disable`.
 
 ---
 
-## 🚀 Running Locally
+## 🐳 Docker
+
+Bring up the app **and** PostgreSQL with one command:
 
 ```bash
-# Copy and fill environment variables
-cp .env.example .env
-
-# (Optional) Seed the database with test users
-go run ./backend/cmd/seed_users
-
-# (Optional) Seed candidate data
-go run ./backend/cmd/seed_employee
-
-# Start the server
-make run
-# or: go run ./backend/cmd/server
+make docker-up
+# or: docker compose up --build
 ```
 
-The application will be available at `http://localhost:8000`.
+- App: http://localhost:8000
+- PostgreSQL: localhost:5432
 
----
-
-## ☁️ Deploying to Render
-
-The repository ships with a `render.yaml` blueprint, so deployment is mostly dashboard-driven. The project uses **Neon PostgreSQL** for storage and **Cloudinary** for photos — both work out of the box on Render because the app reads configuration from environment variables.
-
-### 1. Push the blueprint
-
-Make sure `render.yaml`, the Go code, templates and `frontend/` are committed and pushed to GitHub. Render reads the repo directly.
-
-```bash
-git add render.yaml
-git commit -m "chore: add render.yaml blueprint"
-git push
-```
-
-### 2. Create the service on Render
-
-1. Go to <https://render.com> → **New** → **Blueprint** → select the `hr-management-web` repository.
-2. Render will detect the `hr-management-web` web service from `render.yaml` and ask for the environment variables.
-
-### 3. Set the environment variables
-
-Every variable listed in the blueprint must be filled in (they are marked as `sync: false`, so you enter them manually):
-
-| Variable | Where to get it |
-|---|---|
-| `DATABASE_URL` | Your Neon connection string (project → Dashboard → Connection details → pooled connection) |
-| `SESSION_SECRET` | Any long random string, e.g. `openssl rand -hex 32` |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary dashboard |
-| `CLOUDINARY_API_KEY` | Cloudinary dashboard |
-| `CLOUDINARY_API_SECRET` | Cloudinary dashboard |
-| `SMTP_HOST` | SMTP server, e.g. `smtp.gmail.com` (used for password recovery e-mail) |
-| `SMTP_PORT` | SMTP port, e.g. `587` |
-| `SMTP_EMAIL` | SMTP account e-mail used to authenticate |
-| `SMTP_PASSWORD` | SMTP account password / app password |
-| `SMTP_FROM` | Sender address shown in the e-mail, e.g. `staffio.mail@gmail.com` |
-| `SMTP_FROM_NAME` | Sender display name, e.g. `Staffio` |
-| `SITE_URL` | Your app URL used in the reset link, e.g. `https://your-service.onrender.com` (falls back to the request host) |
-
-The port is injected by Render automatically via the `PORT` environment variable — the server already reads it (`os.Getenv("PORT")`).
-
-### 4. Deploy
-
-Click **Apply** / **Deploy**. Render builds the Go binary with `go build -o server ./backend/cmd/server` and starts it. You'll get a `https://your-service.onrender.com` URL.
-
-### First-time setup on production
-
-The tables are created automatically on startup via `AutoMigrate`. If you want sample data, run the seed commands locally against the same `DATABASE_URL`:
-
-```bash
-DATABASE_URL="postgres://..." go run ./backend/cmd/seed_users
-DATABASE_URL="postgres://..." go run ./backend/cmd/seed_employee
-```
-
-### Notes
-
-- The free Render tier spins down after ~15 minutes of inactivity; the first request after idle takes a few seconds to boot.
-- Sessions are cookie-based, photos go to Cloudinary, and the database is external (Neon) — so nothing stateful lives on Render's ephemeral disk. The `uploads/` and `data/` folders are not used in production.
-- Keep `PORT` out of your `.env`; Render sets it for you. The default `8000` is only a fallback for local development.
-
----
-
-## 🗺️ API Routes
-
-| Method | Route | Auth Required | Description |
-|---|---|---|---|
-| `GET` | `/` | No | Landing page ("Staffio") |
-| `GET` | `/login` | No | Login page |
-| `POST` | `/login` | No | Process login |
-| `GET` | `/register` | No | Registration page |
-| `POST` | `/register` | No | Create account |
-| `GET` | `/recuperateaccount` | No | Password recovery form |
-| `POST` | `/recuperateaccount` | No | Send recovery e-mail |
-| `GET` | `/reset-password` | No | Reset password page |
-| `POST` | `/reset-password` | No | Process password reset |
-| `GET` | `/logout` | Yes | Destroy session |
-| `GET` | `/dashboard` | Yes | Metrics overview + employee grid (`?search=`/`?all=`) |
-| `GET` | `/overview` | Yes | Overview page with live charts |
-| `GET` | `/api/overview/departments` | Yes | Candidates per department (JSON) |
-| `GET` | `/api/overview/employees` | Yes | New candidates over time (JSON) |
-| `GET` | `/employees` | Yes | Candidate list (`?status=` and `?page=`) |
-| `POST` | `/employees` | Yes | Create new candidate |
-| `GET` | `/employees/:id/edit` | Yes | Candidate edit form |
-| `POST` | `/employees/:id/edit` | Yes | Update candidate |
-| `POST` | `/employees/:id/status` | Yes | Update candidate status |
-| `DELETE` | `/employees/:id` | Yes | Delete candidate (JSON) |
-| `POST` | `/employees/:id/delete` | Yes | Delete candidate (form) |
-| `GET` | `/badge/:id` | Yes | Candidate ID card view |
-| `GET` | `/department` | Yes | Department list + creation form |
-| `POST` | `/department` | Yes | Create new department |
-| `GET` | `/department/:id` | Yes | Department detail + members |
-| `POST` | `/department/:id/add_employee` | Yes | Assign employee to department |
-| `POST` | `/department/:id/remove_employee` | Yes | Remove employee from department |
-| `POST` | `/department/:id/delete` | Yes | Delete department |
-| `GET` | `/report` | Yes | Report list |
-| `GET` | `/report/new` | Yes | Report creation form |
-| `POST` | `/report/new` | Yes | Create report |
-| `GET` | `/config` | Yes | Configuration menu |
-| `GET` | `/config/account` | Yes | Account settings page |
-| `POST` | `/config/account/profile` | Yes | Update username/email |
-| `POST` | `/config/account/photo` | Yes | Upload profile photo |
-| `POST` | `/config/account/password` | Yes | Change password |
-| `POST` | `/config/account/delete` | Yes | Delete account |
-| `GET` | `/config/device` | Yes | Device settings page |
-
----
-
-## 🧰 CLI Utilities
-
-The `cmd/` directory contains standalone runnable programs that share the same database connection — a common Go pattern for operational tooling.
-
-```bash
-# Seed 100 test user accounts
-go run ./backend/cmd/seed_users
-
-# Seed 50 test candidate records
-go run ./backend/cmd/seed_employee
-
-# Print all users in the database
-go run ./backend/cmd/list_users
-
-# Fix PostgreSQL serial sequences after bulk imports
-go run ./backend/cmd/fix_sequences
-```
+Set `SESSION_SECRET`, Cloudinary and SMTP values via environment variables before running — the Compose defaults are for local dev only.
 
 ---
 
 ## 🧪 Testing
 
-Integration tests validate the core application flows: candidate creation, status transitions, and authentication. The test suite uses `stretchr/testify` for assertions and `go.uber.org/mock` for[...]
-
 ```bash
 make test
+# or: go test ./...
 ```
 
-Tests run against an isolated test database instance. The `jordanlewis/gcassert` package provides compile-time assertions for performance-critical code paths.
+The suite covers authentication, candidate lifecycle, departments, RBAC, CSRF, rate limiting and multi-tenant isolation against an isolated in-memory database. CI (`.github/workflows/ci.yml`) runs `go vet`, tests and a build on every push.
+
+Load tests are available via `k6` (`make k6-dashboard`, `make k6-department`, `make k6-create`).
+
+See [docs/testing.md](./docs/testing.md).
+
+---
+
+## ☁️ Deployment
+
+Deployable to **Render** free tier in minutes via the included Blueprint:
+
+1. Push the repo (including `render.yaml`).
+2. In Render → **New** → **Blueprint**, select the repository.
+3. Fill in the environment variables (`DATABASE_URL`, `SESSION_SECRET`, Cloudinary, SMTP, `SITE_URL`).
+4. **Apply** — Render builds `go build -o server ./backend/cmd/server` and serves it.
+
+Nothing stateful lives on the app host: sessions are cookies, photos are on Cloudinary, and data lives in Neon. The full stack runs at **$0/month**.
+
+See [docs/deployment.md](./docs/deployment.md).
+
+---
+
+## 📚 Documentation
+
+A complete technical reference lives in [`docs/`](./docs/README.md):
+
+| Area | Document |
+|---|---|
+| Start here | [Getting Started](./docs/getting-started.md) |
+| Architecture | [Architecture](./docs/architecture.md) · [Backend](./docs/backend.md) |
+| Data | [Database](./docs/database.md) |
+| Frontend | [Frontend](./docs/frontend.md) |
+| Auth & Security | [Authentication](./docs/authentication.md) · [Security](./docs/security.md) · [Roles & Permissions](./docs/roles-permissions.md) |
+| Modules | [Search](./docs/search.md) · [Departments](./docs/departments.md) · [Reports](./docs/reports.md) |
+| Reference | [API](./docs/api.md) · [Testing](./docs/testing.md) · [Scalability](./docs/scalability.md) |
+| Direction | [Roadmap](./docs/roadmap.md) · [Deployment](./docs/deployment.md) |
 
 ---
 
 ## 🗺️ Roadmap
 
-A realistic, free-tier-only, time-boxed plan for a solo developer. See the full plan in [`docs/roadmap.md`](./docs/roadmap.md).
-
-### ✅ Shipped
-- [x] Candidate CRUD, search, pagination, status pipeline, ID card
-- [x] Departments: create, list, detail, delete, add/remove members
-- [x] Overview analytics (live charts) + reports
-- [x] Account management (profile, photo, password, delete)
-- [x] Session auth + password recovery + landing page
-
-### Phase 1 — Make it safe & sellable (weeks 1–4)
-- [ ] RBAC (Admin / Recruiter / Viewer)
-- [ ] CSRF protection + rate limiting on auth routes
-- [ ] Remove dev leftovers (`/debug/cookie`)
-
-### Phase 2 — Core recruiting value (weeks 5–8)
-- [ ] Candidate notes
-- [ ] Interview scheduling + upcoming-interviews list
-
-### Phase 3 — Dev velocity & reliability (weeks 9–12)
-- [ ] Real Go tests + GitHub Actions CI
-- [ ] Docker + Compose for local dev
-- [ ] Structured logging with `log/slog`
-
-### Phase 4 — Launch & find users (weeks 13–16)
-- [ ] Demo account, empty states, README demo link
-- [ ] Free distribution: Product Hunt, HN, dev.to, LinkedIn
-- [ ] Free analytics (GoatCounter)
-
-**Never doing (solo + $0):** Prometheus, Kubernetes, Redis, microservices, paid e-mail/monitoring. The whole stack costs **$0/month** (Neon + Render + Cloudinary + Gmail SMTP + GitHub).
+The current focus is onboarding polish and a few high-value recruiting features (candidate notes, interview scheduling), then distribution. See [docs/roadmap.md](./docs/roadmap.md).
 
 ---
 
@@ -790,6 +303,6 @@ This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE)
 
 Built with ❤️ using Go + Gin + PostgreSQL · Designed for portfolio and production alike
 
-⭐ Star the repo, please, i need buy food
+⭐ Star the repo if you find it useful
 
 </div>

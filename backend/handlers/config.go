@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -91,7 +91,7 @@ func UpdateProfileHandler(c *gin.Context) {
 		"username": username,
 		"email":    email,
 	}).Error; err != nil {
-		log.Println("Error updating profile:", err)
+		slog.Error("Error updating profile", "error", err)
 		c.HTML(http.StatusInternalServerError, "account.html", gin.H{
 			"User":    loadUser(),
 			"error":   "Error updating profile",
@@ -156,7 +156,7 @@ func ChangePasswordHandler(c *gin.Context) {
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Error generating hash:", err)
+		slog.Error("Error generating hash", "error", err)
 		c.HTML(http.StatusInternalServerError, "account.html", gin.H{
 			"User":     user,
 			"error":    "Internal error when changing password",
@@ -166,7 +166,7 @@ func ChangePasswordHandler(c *gin.Context) {
 	}
 
 	if err := DB.Model(&User{}).Where("id = ?", userID).Update("password", string(hashedPassword)).Error; err != nil {
-		log.Println("Error changing password:", err)
+		slog.Error("Error changing password", "error", err)
 		c.HTML(http.StatusInternalServerError, "account.html", gin.H{
 			"User":     user,
 			"error":    "Error changing password",
@@ -207,7 +207,7 @@ func DeleteAccountHandler(c *gin.Context) {
 	}
 
 	if err := DB.Delete(&user).Error; err != nil {
-		log.Println("Error deleting account:", err)
+		slog.Error("Error deleting account", "error", err)
 		c.HTML(http.StatusInternalServerError, "account.html", gin.H{
 			"User":   user,
 			"error":  "Error deleting account",
@@ -217,7 +217,7 @@ func DeleteAccountHandler(c *gin.Context) {
 	}
 
 	if err := auth.DestroySession(c); err != nil {
-		log.Println("Error destroying session after account deletion:", err)
+		slog.Error("Error destroying session after account deletion", "error", err)
 	}
 
 	c.Redirect(http.StatusFound, "/register")
@@ -296,7 +296,7 @@ func UpdateProfilePhotoHandler(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		log.Println("Error processing upload:", err)
+		slog.Error("Error processing upload", "error", err)
 		c.HTML(http.StatusBadRequest, "account.html", gin.H{
 			"User":  user,
 			"error": "Error processing the uploaded file",
@@ -314,7 +314,7 @@ func UpdateProfilePhotoHandler(c *gin.Context) {
 	}
 
 	if err := DB.Model(&User{}).Where("id = ?", userID).Update("photo", photoURL).Error; err != nil {
-		log.Println("Error updating profile photo:", err)
+		slog.Error("Error updating profile photo", "error", err)
 		c.HTML(http.StatusInternalServerError, "account.html", gin.H{
 			"User":  user,
 			"error": "Error updating profile photo",
@@ -323,7 +323,7 @@ func UpdateProfilePhotoHandler(c *gin.Context) {
 	}
 
 	if err := storage.Destroy(c.Request.Context(), user.Photo); err != nil {
-		log.Printf("Error deleting old profile photo on Cloudinary: %v\n", err)
+		slog.Error("Error deleting old profile photo on Cloudinary", "error", err)
 	}
 
 	user.Photo = photoURL

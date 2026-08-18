@@ -336,7 +336,7 @@ body {
 
 .report-stats {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 18px;
     margin-bottom: 22px;
 }
@@ -696,6 +696,11 @@ body {
     box-shadow: 0 0 0 5px var(--success-bg);
 }
 
+.report-dot-fired {
+    background: var(--danger);
+    box-shadow: 0 0 0 5px var(--danger-bg);
+}
+
 .report-doc {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -725,6 +730,11 @@ body {
 .report-doc-dot-hired {
     background: var(--success);
     box-shadow: 0 0 0 5px var(--success-bg);
+}
+
+.report-doc-dot-fired {
+    background: var(--danger);
+    box-shadow: 0 0 0 5px var(--danger-bg);
 }
 
 .report-doc-type {

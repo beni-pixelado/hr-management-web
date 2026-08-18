@@ -1,0 +1,13 @@
+.git
+.gitignore
+*.exe
+server
+server.exe
+cookies.txt
+data/
+uploads/
+.env
+docs/
+.github/
+.vscode/
+.air.toml

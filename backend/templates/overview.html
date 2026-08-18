@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Overview | RH System</title>
-    <link rel="stylesheet" href="/css/overview.css">
+    <link rel="stylesheet" href="/css/overview.css?v=3">
 </head>
 
 <body>
@@ -55,7 +55,12 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
-
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span>Configuration</span>
@@ -88,8 +93,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="/js/departments-pie.js"></script>
-    <script src="/js/employees-line.js"></script>
+    <script src="/js/departments-pie.js?v=2"></script>
+    <script src="/js/employees-line-v2.js"></script>
     <script src="/js/dark-mode.js"></script>
 </body>
 

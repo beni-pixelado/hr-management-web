@@ -1,53 +1,89 @@
 # Testing
 
-## Overview
+Staffio ships a real test suite that exercises the core flows most likely to break silently: authentication, candidate lifecycle, departments, RBAC, CSRF, rate limiting and multi-tenant isolation. Tests run against an **isolated in-memory database** so they are fast, deterministic and safe.
 
-The test suite covers the two layers most likely to break silently: handler logic and the authentication flow. Unit tests for individual utility functions (password hashing, session helpers) are also included.
+---
 
-## Tools
+## Running
+
+```bash
+make test          # go test ./...
+make test-suite    # go test ./internal/tests/ -v
+```
+
+GitHub Actions CI runs `go vet`, `go test ./...` and a production build on every push/PR (see `.github/workflows/ci.yml`).
+
+---
+
+## Coverage Areas
+
+The suite lives in `internal/tests/`:
+
+| File | Covers |
+|---|---|
+| `auth_test.go` | Registration (creates org + owner), login, logout, unauthenticated redirect |
+| `employee_test.go` | Candidate creation, field validation, status pipeline, deletion, org scoping |
+| `department_test.go` | Department create + member assignment, member cleanup on delete, cross-org isolation |
+| `csrf_test.go` | Accepts valid token, rejects missing and wrong tokens |
+| `rbac_test.go` | Owner promotes admin, admin cannot promote admin, viewer cannot create, recruit redirected from dashboard |
+| `tenant_test.go` | Multi-tenant data isolation between organizations |
+
+Additional middleware behaviors (rate limiting) are validated in the same package.
+
+---
+
+## Testing Approach
+
+The harness (`harness_test.go`) stands up a Gin router with the same middleware stack as production and drives requests through `httptest.NewRecorder` against an in-memory database. Example:
+
+```go
+func TestCreateEmployeeScopedToOrg(t *testing.T) {
+    db := testDB()
+    router := setupRouter(db)
+
+    // register + login a user, then create an employee as that user
+    // assert the row belongs to the user's organization
+}
+```
+
+Assertions use the standard library plus `stretchr/testify` (`assert`/`require`).
+
+---
+
+## Tooling
 
 | Tool | Role |
 |---|---|
 | `testing` (stdlib) | Test runner |
-| `stretchr/testify` | Assertion helpers (`assert.Equal`, `require.NotNil`) |
-| `go.uber.org/mock` | Generated mock types for database interfaces |
-| `jordanlewis/gcassert` | Compile-time assertions for performance-critical paths |
+| `stretchr/testify` | Assertion helpers |
+| `go.uber.org/mock` | Generated mocks where interfaces are isolated |
+| `jordanlewis/gcassert` | Compile-time assertions for hot paths |
 
-## Running Tests
+---
+
+## Load Testing (k6)
+
+Optional `k6` scripts validate behavior under concurrent load (requires [k6](https://k6.io)):
 
 ```bash
-make test
-# or directly:
-go test ./...
+make k6-dashboard        # dashboard under concurrent users
+make k6-department       # department operations
+make k6-create           # employee creation throughput
 ```
 
-## Integration Tests
+Targets/expectations are set via env vars (`BASE_URL`, `ACCOUNTS`, `EMPLOYEES_PER_ACCOUNT`, `SLEEP_MS`, `ITERATIONS`).
 
-Integration tests validate complete HTTP request cycles against a test database. They spin up a Gin router with the same middleware stack as production, send requests via `httptest.NewRecorder`, and assert on status codes, headers, and body content.
-
-```go
-func TestCreateEmployee(t *testing.T) {
-    db := testDB()
-    router := setupRouter(db)
-
-    body := strings.NewReader(`full_name=Alice&position=Engineer&email=alice@example.com`)
-    req  := httptest.NewRequest("POST", "/employees", body)
-    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-    addValidSession(req)
-
-    w := httptest.NewRecorder()
-    router.ServeHTTP(w, req)
-
-    assert.Equal(t, http.StatusFound, w.Code)
-
-    var count int64
-    db.Model(&Employee{}).Where("email = ?", "alice@example.com").Count(&count)
-    assert.Equal(t, int64(1), count)
-}
-```
+---
 
 ## What Is Not Tested Yet
 
-- **Load tests** — planned using `k6` or `vegeta`. Target: search query under 100 concurrent users on a 10,000-row table should remain under 50 ms.
-- **Department CRUD integration tests** — tracked for v1.2 alongside the collaborator membership feature.
-- **Session expiry edge cases** — cookie tamper detection is covered by `gorilla/securecookie` internally but should have an explicit test.
+- **Session expiry edge cases** — tamper detection is delegated to `gorilla/securecookie`; an explicit test is planned.
+- **E-mail delivery** — recovery/invite flows are mocked at the SMTP boundary.
+
+---
+
+## Related
+
+- [Getting Started](./getting-started.md)
+- [Architecture](./architecture.md)
+- [Roadmap](./roadmap.md)

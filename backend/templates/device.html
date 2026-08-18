@@ -31,6 +31,7 @@
                     {{end}}
                     {{end}}
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
@@ -40,12 +41,14 @@
                         <span class="nav-icon">📈</span>
                         <span>Overview</span>
                     </a>
+                    {{end}}
 
                     <a href="/employees" class="nav-item">
                         <span class="nav-icon">👥</span>
                         <span>Manage Candidates</span>
                     </a>
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
@@ -55,6 +58,14 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
+
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
+                    {{end}}
 
                     <a href="/config" class="nav-item active">
                         <span class="nav-icon">⚙️</span>

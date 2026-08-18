@@ -14,15 +14,15 @@
         if (!typeSelect || !timeSelect || !feedback) return;
 
         function endpointFor(typeValue) {
-            return typeValue === "hired"
-                ? "/api/report/hired"
-                : "/api/report/absences";
+            if (typeValue === "hired") return "/api/report/hired";
+            if (typeValue === "fired") return "/api/report/fired";
+            return "/api/report/absences";
         }
 
         function labelFor(typeValue) {
-            return typeValue === "hired"
-                ? "Count hired in the last"
-                : "Count absences in the last";
+            if (typeValue === "hired") return "Count hired in the last";
+            if (typeValue === "fired") return "Count fired in the last";
+            return "Count absences in the last";
         }
 
         function update() {

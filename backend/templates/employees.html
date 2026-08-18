@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Candidates | RH System</title>
-    <link rel="stylesheet" href="/css/employees.css">
+    <link rel="stylesheet" href="/css/employees.css?v=2">
 </head>
 
 <body>
@@ -35,30 +35,38 @@
                     {{end}}
                     {{end}}
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/dashboard" class="nav-item">
                         <span class="nav-icon">📊</span>
                         <span>Dashboard</span>
                     </a>
-
                     <a href="/overview" class="nav-item">
                         <span class="nav-icon">📈</span>
                         <span>Overview</span>
                     </a>
+                    {{end}}
 
                     <a href="/employees" class="nav-item active">
                         <span class="nav-icon">👥</span>
                         <span>Manage Candidates</span>
                     </a>
 
+                    {{if ne .user.Role "recruit"}}
                     <a href="/department" class="nav-item">
                         <span class="nav-icon">🗂️</span>
                         <span>Departments</span>
                     </a>
-
                     <a href="/report" class="nav-item">
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
+                    {{end}}
 
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
@@ -73,6 +81,7 @@
             </aside>
 
             <main class="main-content">
+                {{if .canEdit}}
                 <section class="form-section">
                     <div class="section-intro">
                         <div>
@@ -82,6 +91,7 @@
                     </div>
 
                     <form method="POST" action="/employees" enctype="multipart/form-data" class="employee-form">
+                        {{csrfField}}
                         <div class="form-group">
                             <label for="full_name">Full Name:</label>
                             <input type="text" id="full_name" name="full_name" required placeholder="ethan smith">
@@ -111,6 +121,7 @@
                         <button type="submit" class="btn btn-primary">Add Candidate</button>
                     </form>
                 </section>
+                {{end}}
 
                 <section class="employees-section">
                     <div class="employees-section-header">
@@ -136,6 +147,13 @@
                             <a href="/employees?status=rejected" class="filter-btn {{if eq .currentStatus "rejected"}}active{{end}}">
                                 Rejected ({{.totalRejected}})
                             </a>
+                        </div>
+
+                        <div class="csv-download">
+                            <form method="GET" action="/employees/download" class="csv-download-form">
+                                <input type="hidden" name="status" value="{{.currentStatus}}">
+                                <button type="submit" class="btn btn-secondary">Download CSV</button>
+                            </form>
                         </div>
                     </div>
 
@@ -190,26 +208,30 @@
                                     </td>
 
                                     <td class="actions">
-
+                                        {{if $.canEdit}}
                                         {{if eq .Status "pending"}}
                                         <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
+                                            {{csrfField}}
                                             <input type="hidden" name="status" value="contractors">
                                             <input type="date" name="hire_date" required>
                                             <button type="submit" class="btn btn-success btn-sm">Hire</button>
                                         </form>
 
                                         <form method="POST" action="/employees/{{.ID}}/status" style="display: inline;">
+                                            {{csrfField}}
                                             <input type="hidden" name="status" value="rejected">
                                             <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                                         </form>
                                         {{end}}
 
                                         <form method="POST" action="/employees/{{.ID}}/delete" style="display:inline;">
+                                            {{csrfField}}
                                             <a href="/employees/{{.ID}}/edit" class="btn btn-secondary btn-sm">Edit</a>
                                             <button type="submit" class="btn btn-delete btn-sm" onclick="return confirm('Are you sure you want to delete this candidate?')">
                                                 Delete
                                             </button>
                                         </form>
+                                        {{end}}
                                     </td>
                                 </tr>
                                 {{end}}

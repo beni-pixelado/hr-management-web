@@ -59,7 +59,12 @@
                         <span class="nav-icon">📋</span>
                         <span>Report</span>
                     </a>
-
+                    {{if or (eq .user.Role "owner") (eq .user.Role "admin")}}
+                    <a href="/team" class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        <span>Team</span>
+                    </a>
+                    {{end}}
                     <a href="/config" class="nav-item">
                         <span class="nav-icon">⚙️</span>
                         <span>Configuration</span>
@@ -103,6 +108,13 @@
                         <div>
                             <span class="report-stat-value">{{.totalHired}}</span>
                             <span class="report-stat-label">Total hired in reports</span>
+                        </div>
+                    </div>
+                    <div class="report-stat">
+                        <span class="report-stat-icon">✕</span>
+                        <div>
+                            <span class="report-stat-value">{{.totalFired}}</span>
+                            <span class="report-stat-label">Total fired in reports</span>
                         </div>
                     </div>
                 </div>

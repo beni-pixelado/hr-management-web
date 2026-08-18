@@ -1,155 +1,204 @@
 # Backend — Handlers, Routing & Business Logic
 
-## Structure
+This document describes the HTTP/controller layer. Infrastructure lives in `internal/` and is covered in [Architecture](./architecture.md) and [Security](./security.md).
 
-The backend is split between `backend/handlers/` — where HTTP request/response logic lives — and `internal/` — where infrastructure and cross-cutting concerns live. Handlers call internal packages but not vice versa; this one-way dependency keeps the system testable and the layers independent.
-
-## `backend/handlers/auth.go`
-
-Owns the entire authentication surface: registering new accounts, processing login credentials, and destroying sessions on logout.
-
-### Register (`POST /register`)
-
-Accepts a form submission with `username`, `email`, and `password`. Validates all fields are present, checks for an existing username via a GORM `Where` query, hashes the password with `bcrypt.GenerateFromPassword`, and inserts a new `User` row. On error, re-renders `register.html` with a user-facing message rather than returning a raw HTTP error code.
-
-### Login (`POST /login`)
-
-Queries the users table with `username AND email`, then calls `bcrypt.CompareHashAndPassword` to verify the credential. On success, calls `auth.CreateSession(c, user.ID)` to write the signed session cookie, then redirects to `/dashboard`. On failure, renders a generic error message — deliberately vague to avoid confirming whether the username/email pair exists.
-
-### Logout (`GET /logout`)
-
-Calls `auth.DestroySession(c)`, which sets the session cookie's `MaxAge` to `-1`, instructing the browser to delete it immediately, then redirects to `/login`.
+The backend is split into `backend/handlers/` (request/response logic) and `backend/` infra (`cmd/`, `database/`). Handlers call `internal/` packages — never the reverse — keeping the layers independent and testable.
 
 ---
 
-## `backend/handlers/employee.go`
+## Routing — `backend/cmd/server/main.go`
 
-The most complex handler file. Handles six distinct operations.
-
-### GetEmployees (`GET /employees`)
-
-Builds a conditional GORM query based on the optional `q` query parameter. When `q` is present, adds a `WHERE` clause with `ILIKE` matching across `full_name`, `position`, and `email`. Applies `OFFSET`/`LIMIT` pagination (20 per page by default). The `Count` query runs on the same filtered condition, ensuring pagination totals always reflect the filtered result set.
-
-```go
-query := DB.Model(&Employee{})
-
-if search := strings.TrimSpace(c.Query("q")); search != "" {
-    term := "%" + search + "%"
-    query = query.Where(
-        "full_name ILIKE ? OR position ILIKE ? OR email ILIKE ?",
-        term, term, term,
-    )
-}
-
-var total int64
-query.Count(&total)
-
-var employees []Employee
-query.Offset(offset).Limit(limit).Find(&employees)
-```
-
-### CreateEmployee (`POST /employees`)
-
-Reads a multipart form (required for the photo upload), validates that `full_name`, `email`, and `position` are present. If a file is provided:
-
-1. Checks file size (`MaxFileSize = 5 MB`)
-2. Detects MIME type via file extension and `http.DetectContentType` as a fallback
-3. Validates that the MIME type is in the allowed list (`image/jpeg`, `image/png`, `image/gif`, `image/webp`)
-4. Generates a UUID-based filename to prevent collisions and path traversal
-5. Saves to `./uploads/`
-
-Inserts the `Employee` row with `Status` defaulting to `"pending"`.
-
-### UpdateEmployeeStatus (`POST /employees/:id/status`)
-
-Accepts `status` and optional `hire_date` from the form body. Updates both fields in a single GORM `Updates` call using a map (not a struct, to allow zero-value updates). Redirects back to `/employees` on success.
-
-### DeleteEmployee (`DELETE /employees/:id`)
-
-Performs a GORM soft-delete (sets `DeletedAt`) on the employee matching the route `:id` parameter. Returns JSON on both success and error.
-
-### BadgeHandler (`GET /employees/:id/card`)
-
-Fetches a single employee record with `DB.First` and renders `id-card.html`. Returns a plain `404` string if the ID is not found.
-
-### GetEmployeesAPI (`GET /api/employees`)
-
-JSON-only endpoint. Supports `?search=` and `?status=` query parameters for filtering. Returns a JSON envelope with `employees` array and `total` count. Intended for the future REST API layer.
-
----
-
-## `backend/handlers/departament.go`
-
-Handles all department operations.
-
-### DepartmentPageHandler (`GET /department`)
-
-Fetches all employees (to populate the manager `<select>` dropdown) and all departments in two separate queries, then renders `departments.html` with both datasets. This is a single-request page load — no AJAX.
-
-### CreatedepartmentHandler (`POST /department`)
-
-Reads `name`, `code`, and optional `boss_id` from the form. Validates that `name` and `code` are not empty. Parses `boss_id` as `uint64` (returns a 400 if the string is non-empty but invalid). Creates the `Department` row and redirects to `/department`.
-
-```go
-department := Department{
-    Name:   Name,
-    Code:   Code,
-    BossID: bossID,
-}
-DB.Create(&department)
-```
-
-### DepartmentHandler (paginated listing)
-
-Handles `GET /department` with pagination support (20 per page). Computes `totalPages` and passes pagination metadata to the template for next/prev link generation.
-
----
-
-## Routing in `backend/cmd/server/main.go`
+The composition root registers all routes. Public and protected routes are separated:
 
 ```go
 r := gin.Default()
+r.SetTrustedProxies(nil)
+
 r.SetFuncMap(template.FuncMap{
-    "lower": strings.ToLower,
-    "add":   func(a, b int) int { return a + b },
+    "lower":     strings.ToLower,
+    "add":       func(a, b int) int { return a + b },
+    "csrfField": csrf.Field,
 })
+
+r.Use(csrf.Protect())
 r.LoadHTMLGlob("backend/templates/*")
 r.Static("/css", "frontend/css")
-r.Static("/uploads", "./uploads")
+r.Static("/js", "frontend/public/js")
+r.Static("/static", "frontend/static")
 
 // Public routes
-r.GET("/login",    ...)
-r.POST("/login",   handlers.Login)
-r.GET("/register", ...)
-r.POST("/register", handlers.Register)
-r.GET("/", func(c *gin.Context) { c.Redirect(302, "/login") })
+r.GET("/login", ...)
+r.POST("/login", middleware.RateLimit(10, time.Minute), handlers.Login)
+// ... register, recuperateaccount, reset-password, landing, robots.txt
 
 // Protected routes
 protected := r.Group("/")
-protected.Use(middleware.RequireAuth)
+protected.Use(middleware.RequireAuth, middleware.LoadUser, middleware.BlockViewerWrites)
 {
-    protected.GET("/dashboard",               dashboardHandler)
-    protected.GET("/employees",               handlers.GetEmployees)
-    protected.POST("/employees",              handlers.CreateEmployee)
-    protected.POST("/employees/:id/status",   handlers.UpdateEmployeeStatus)
-    protected.DELETE("/employees/:id",        handlers.DeleteEmployee)
-    protected.GET("/department",              handlers.DepartmentPageHandler)
-    protected.POST("/department",             handlers.CreatedepartmentHandler)
-    protected.GET("/logout",                  handlers.Logout)
+    protected.GET("/dashboard", ...)
+    protected.GET("/employees", handlers.GetEmployees)
+    protected.POST("/employees", handlers.CreateEmployee)
+    // ...
 }
 ```
 
-The `protected` group applies `middleware.RequireAuth` to every route inside it. Adding a new protected route is a matter of registering it inside the group — no per-handler auth checks needed.
+The `protected` group applies authentication, user/org loading and the viewer-write block to every route inside it. Adding a protected route means registering it inside the group — no per-handler auth checks needed.
 
-## Template Functions
+**Template functions:**
 
-Two custom template functions are registered at startup:
+| Function | Purpose |
+|---|---|
+| `lower` | Maps status strings to lowercase CSS class names (`{{.Status \| lower}}`) |
+| `add` | Offset arithmetic for pagination (`{{add .currentPage 1}}`) |
+| `csrfField` | Renders a hidden `<input>` carrying the CSRF token |
 
-| Function | Usage | Purpose |
-|---|---|---|
-| `lower` | `{{.Status \| lower}}` | Maps status strings to lowercase CSS class names |
-| `add` | `{{add .currentPage 1}}` | Offset arithmetic for pagination link hrefs |
+---
+
+## `handlers/auth.go` — Authentication & Models
+
+Defines the core models and the auth surface.
+
+### Data models
+
+- `Organization{ID, Name, CreatedAt}`
+- `User{ID, Username, Password, Email, Photo, OrganizationID, Role}`
+
+Roles are string constants: `owner`, `admin`, `recruit`, `viewer`.
+
+### Register (`POST /register`)
+
+Reads `username`, `email`, `password`; validates presence; checks for an existing username; hashes the password with **bcrypt**; creates the user inside a fresh `Organization` (multi-tenant bootstrap). On error it re-renders `register.html` with a user-facing message.
+
+### Login (`POST /login`)
+
+Finds the user by username/email, verifies the credential with `bcrypt.CompareHashAndPassword`, then calls `auth.CreateSession(c, user.ID)` to write the signed session cookie and redirects to `/dashboard`. Failures return a deliberately vague error to avoid account enumeration.
+
+### Logout (`GET /logout`)
+
+Calls `auth.DestroySession(c)` (sets cookie `MaxAge = -1`), then redirects to `/login`.
+
+---
+
+## `handlers/employee.go` — Candidate Management
+
+The largest handler file. All operations are **scoped to the actor's `OrganizationID`** and gated by `actor.CanEditEmployees()`.
+
+### GetEmployees (`GET /employees`)
+
+Builds a query filtered by org, with optional `?status=` and `?page=`. It computes per-status totals (`pending`/`contractors`/`rejected`) plus the filtered total, applies `OFFSET`/`LIMIT` pagination (20/page), and renders `employees.html`. Status aliases map friendly labels to stored values:
+
+| Alias | Stored status |
+|---|---|
+| `interviewing` | `pending` |
+| `hired` | `contractors` |
+| `rejected` | `rejected` |
+
+### DownloadEmployeesCSV (`GET /employees/download`)
+
+Exports the org's employees (optionally filtered by status) as a CSV attachment.
+
+### CreateEmployee (`POST /employees`)
+
+Validates `full_name`, `email`, `position`; optionally uploads a photo; inserts the row with `Status: "pending"`.
+
+**Photo upload** (`saveUploadedImage`):
+
+1. Rejects files over `5 MB`.
+2. Sniffs the MIME type (`http.DetectContentType`).
+3. Validates against the allowlist: `image/jpeg`, `image/png`, `image/gif`, `image/webp`.
+4. Uploads to **Cloudinary** under a UUID-based public ID (no path traversal, no collisions).
+
+### UpdateEmployeeStatus (`POST /employees/:id/status`)
+
+Sets `status` and optional `hire_date`. Uses a `map` for `Updates` so zero values update correctly. On `rejected` it records `rejected_at` and logs a `Termination`; otherwise clears `rejected_at`.
+
+> **RBAC guard:** a `recruit` may not reject a candidate whose email belongs to a member of higher rank (see `employeeLinksToSuperior`).
+
+### MarkAbsence (`POST /employees/:id/absence`)
+
+Within a transaction: creates an `Absence` row and atomically increments `Employee.Absences` via `UpdateColumn("absences", gorm.Expr("absences + 1"))`.
+
+### DeleteEmployee (`DELETE /employees/:id`) / DeleteEmployeeForm (`POST /employees/:id/delete`)
+
+Soft-deletes the employee, logs a `Termination` (reason `deleted`), and destroys the photo on Cloudinary. Both a JSON and a form-path variant exist.
+
+### EditEmployeePage / UpdateEmployee
+
+Render the edit form and apply updates (including photo replacement, destroying the previous image).
+
+### GetEmployeesAPI (`GET /api/employees`)
+
+JSON-only endpoint supporting `?search=` and `?status=`, scoped to the org. Intended for a future REST API layer.
+
+### BadgeHandler (`GET /badge/:id`)
+
+Renders a print-friendly employee ID card (`id-card.html`).
+
+---
+
+## `handlers/departament.go` — Departments
+
+- **DepartmentPageHandler (`GET /department`)** — loads all employees (for the manager dropdown) and departments, renders `departments.html`.
+- **CreatedepartmentHandler (`POST /department`)** — validates `name`/`code`, parses optional `boss_id`, creates the `Department` row.
+- **DepartmentHandler (`GET /department/:id`)** — paginated detail view with members.
+- **AssignEmployeeToDepartment / DeleteEmployeeFromDepartment** — manage membership.
+- **DeleteDepartment (`POST /department/:id/delete`)** — remove a department.
+
+See [Departments](./departments.md).
+
+---
+
+## `handlers/organization.go` — Team & Multi-Tenant Management
+
+Requires `CanManageTeam()` (owner/admin).
+
+- **TeamPageHandler (`GET /team`)** — lists the org's members.
+- **InviteMemberHandler (`POST /team/invite`)** — creates a member with a temporary password (or updates an existing member's role) and emails credentials. Role assignability depends on the actor's rank.
+- **ChangeRoleHandler (`POST /team/:id/role`)** — reassigns a role respecting the permission matrix.
+- **RemoveMemberHandler (`POST /team/:id/remove`)** — removes a member, reassigning their records to the actor to preserve data integrity.
+- **TransferOwnershipHandler (`POST /team/:id/transfer`)** — the owner hands over the `owner` role (transactional swap to `admin`).
+
+See [Roles & Permissions](./roles-permissions.md).
+
+---
+
+## `handlers/permissions.go` — Authorization
+
+Central RBAC helpers: `roleRank`, `GetCurrentUser`, and the permission predicates `CanManageTeam`, `CanEditEmployees`, `CanViewEmployees`, `CanAssignDepartment`, plus the nuanced `canChangeRole` / `canRemoveMember` rules. `abortUnauthorized` renders a 403.
+
+---
+
+## `handlers/overview.go` — Analytics
+
+- **OverviewHandler (`GET /overview`)** — renders `overview.html` (blocked for `recruit`).
+- **OverviewDataHandlerDepartments (`GET /api/overview/departments`)** — employees grouped by department (JSON).
+- **OverviewDataHandlerEmployees (`GET /api/overview/employees`)** — new candidates per day plus a merged fired series (rejected + terminations) (JSON).
+
+---
+
+## `handlers/report.go` — Reports
+
+- **ReportHandler (`GET /report`)** — lists reports with aggregated totals (absences/hired/fired).
+- **ReportNewHandler / CreateReportHandler** — build a report over a period (`week`/`month`/`year`).
+- **ReportDetailHandler (`GET /report/:id`)** — narrative summary + stats for a report.
+- **ReportAbsencesContent / ReportHiredContent / ReportFiredContent** — JSON API endpoints for live counts.
+
+See [Reports & Analytics](./reports.md).
+
+---
+
+## `handlers/config.go` — Account Management
+
+Profile update, password change (requires current password + bcrypt), account deletion (destroys session), profile photo (Cloudinary), and a device page that infers browser/platform from the `User-Agent`.
+
+---
+
+## `handlers/password_reset_token.go` — Recovery
+
+`PasswordResetToken{ID, Email, Token, ExpiresAt}`. A one-time token with an expiry, created on recovery request and consumed on reset. See [Authentication](./authentication.md).
+
+---
 
 ## Error Handling Pattern
 
-Handlers follow a consistent pattern: validate input → attempt the operation → on error, re-render the form with a user-facing message. Raw 4xx/5xx responses are used only for API endpoints. Template-rendered responses always give the user an actionable message.
+Handlers follow a consistent pattern: **validate input → attempt operation → on error, re-render the form with a user-facing message**. Raw 4xx/5xx JSON responses are used for API endpoints; template-rendered responses always give the user an actionable message. Success and error paths are logged with `log/slog`.

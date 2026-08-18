@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -11,8 +11,8 @@ import (
 type Department struct {
 	ID uint `gorm:"primaryKey" json:"id"`
 
-	UserID uint `gorm:"not null;index" json:"user_id"`
-	User   User `gorm:"constraint:OnDelete:CASCADE;"`
+	UserID         uint `gorm:"not null;index" json:"user_id"`
+	OrganizationID uint `gorm:"index;default:0" json:"organization_id"`
 
 	Code   string `json:"code" gorm:"not null"`
 	Name   string `json:"name" gorm:"not null"`
@@ -30,10 +30,21 @@ func DepartmentHandler(c *gin.Context) {
 		return
 	}
 
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+	if actor.IsRecruit() {
+		c.Redirect(http.StatusFound, "/employees")
+		return
+	}
+	orgID := actor.OrganizationID
+
 	var dept Department
 
 	if err := DB.
-		Where("id = ? AND user_id = ?", idParam, GetCurrentUserID(c)).
+		Where("id = ? AND organization_id = ?", idParam, orgID).
 		First(&dept).Error; err != nil {
 
 		c.String(http.StatusNotFound, "Department not found")
@@ -42,32 +53,37 @@ func DepartmentHandler(c *gin.Context) {
 
 	var allEmployees []Employee
 	if err := DB.
-		Where("user_id = ?", GetCurrentUserID(c)).
+		Where("organization_id = ?", orgID).
 		Find(&allEmployees).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching employees"})
 		return
 	}
 
 	var members []Employee
-	_ = DB.Where("department_id = ? AND user_id = ?", dept.ID, GetCurrentUserID(c)).Find(&members).Error
-
-	var user User
-	if err := DB.Where("id = ?", GetCurrentUserID(c)).First(&user).Error; err != nil {
-		c.Redirect(http.StatusFound, "/login")
-		return
-	}
+	_ = DB.Where("department_id = ? AND organization_id = ?", dept.ID, orgID).Find(&members).Error
 
 	c.HTML(http.StatusOK, "department.html", gin.H{
 		"Department": dept,
 		"Employees":  allEmployees,
 		"Members":    members,
-		"user":       user,
+		"user":       actor,
+		"canEdit":    actor.CanManageTeam() || actor.IsOwner(),
 	})
 }
 
 func AssignEmployeeToDepartment(c *gin.Context) {
 	deptID := c.Param("id")
 	empID := c.PostForm("employee_id")
+
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if !actor.CanAssignDepartment() {
+		abortUnauthorized(c)
+		return
+	}
 
 	if empID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "employee_id is required"})
@@ -77,9 +93,9 @@ func AssignEmployeeToDepartment(c *gin.Context) {
 	if err := DB.
 		Model(&Employee{}).
 		Where(
-			"id = ? AND user_id = ?",
+			"id = ? AND organization_id = ?",
 			empID,
-			GetCurrentUserID(c),
+			actor.OrganizationID,
 		).
 		Update("department_id", deptID).Error; err != nil {
 
@@ -93,16 +109,26 @@ func AssignEmployeeToDepartment(c *gin.Context) {
 func DeleteDepartment(c *gin.Context) {
 	deptID := c.Param("id")
 
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if !actor.CanManageTeam() {
+		abortUnauthorized(c)
+		return
+	}
+
 	_ = DB.
 		Model(&Employee{}).
-		Where("department_id = ? AND user_id = ?", deptID, GetCurrentUserID(c)).
+		Where("department_id = ? AND organization_id = ?", deptID, actor.OrganizationID).
 		Update("department_id", 0).Error
 
 	if err := DB.
 		Where(
-			"id = ? AND user_id = ?",
+			"id = ? AND organization_id = ?",
 			deptID,
-			GetCurrentUserID(c),
+			actor.OrganizationID,
 		).
 		Delete(&Department{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error deleting department"})
@@ -116,6 +142,16 @@ func CreatedepartmentHandler(c *gin.Context) {
 	code := c.PostForm("code")
 	name := c.PostForm("name")
 	bossIDStr := c.PostForm("boss_id")
+
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if !actor.CanManageTeam() {
+		abortUnauthorized(c)
+		return
+	}
 
 	if code == "" || name == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -137,16 +173,17 @@ func CreatedepartmentHandler(c *gin.Context) {
 	}
 
 	department := Department{
-		UserID: GetCurrentUserID(c),
-		Name:   name,
-		Code:   code,
-		BossID: bossID,
+		UserID:         actor.ID,
+		OrganizationID: actor.OrganizationID,
+		Name:           name,
+		Code:           code,
+		BossID:         bossID,
 	}
 
-	log.Printf("Creating department: %+v", department)
+	slog.Info("Creating department", "department", department)
 
 	if err := DB.Create(&department).Error; err != nil {
-		log.Println("Error creating department:", err)
+		slog.Error("Error creating department", "error", err)
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":  "Error saving department",
@@ -162,10 +199,19 @@ func DepartmentPageHandler(c *gin.Context) {
 	var employees []Employee
 	var departments []Department
 
-	userID := GetCurrentUserID(c)
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+	if actor.IsRecruit() {
+		c.Redirect(http.StatusFound, "/employees")
+		return
+	}
+	orgID := actor.OrganizationID
 
 	if err := DB.
-		Where("user_id = ?", userID).
+		Where("organization_id = ?", orgID).
 		Find(&employees).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -175,7 +221,7 @@ func DepartmentPageHandler(c *gin.Context) {
 	}
 
 	if err := DB.
-		Where("user_id = ?", userID).
+		Where("organization_id = ?", orgID).
 		Find(&departments).Error; err != nil {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -184,22 +230,27 @@ func DepartmentPageHandler(c *gin.Context) {
 		return
 	}
 
-	var user User
-	if err := DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.Redirect(http.StatusFound, "/login")
-		return
-	}
-
 	c.HTML(http.StatusOK, "departments.html", gin.H{
 		"Employees":   employees,
 		"Departments": departments,
-		"user":        user,
+		"user":        actor,
+		"canEdit":     actor.CanManageTeam(),
 	})
 }
 
 func DeleteEmployeeFromDepartment(c *gin.Context) {
 	deptID := c.Param("id")
 	empID := c.PostForm("employee_id")
+
+	actor, ok := GetCurrentUser(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if !actor.CanAssignDepartment() {
+		abortUnauthorized(c)
+		return
+	}
 
 	if empID == "" {
 		empID = c.Param("employee_id")
@@ -213,9 +264,9 @@ func DeleteEmployeeFromDepartment(c *gin.Context) {
 	if err := DB.
 		Model(&Employee{}).
 		Where(
-			"id = ? AND user_id = ?",
+			"id = ? AND organization_id = ?",
 			empID,
-			GetCurrentUserID(c),
+			actor.OrganizationID,
 		).
 		Update("department_id", 0).Error; err != nil {
 

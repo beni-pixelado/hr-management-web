@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team | RH System</title>
+    <link rel="stylesheet" href="/css/departments.css">
+    <style>
+        .role-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+        .role-owner { background: #2563eb; color: #fff; }
+        .role-admin { background: #7c3aed; color: #fff; }
+        .role-recruit { background: #059669; color: #fff; }
+        .role-viewer { background: #64748b; color: #fff; }
+        .members-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .members-table th, .members-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(128,128,128,.2); }
+        .member-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .member-actions form { margin: 0; }
+        .mini-select { padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(128,128,128,.4); background: transparent; }
+        .danger { color: #ef4444; }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="window-header">
+            <div>
+                <div class="eyebrow">HR Management</div>
+                <div class="window-title">Team Members</div>
+            </div>
+            <div class="window-status">Organization access</div>
+            <div class="window-controls">
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+                <div class="window-control"></div>
+            </div>
+        </div>
+
+        <div class="window-body">
+            <aside class="sidebar">
+                <div class="nav-menu">
+                    {{if .user}}
+                    {{if .user.Photo}}
+                    <img src="{{.user.Photo}}" class="user-photo-nav" alt="Profile photo">
+                    {{else}}
+                    <span class="user-photo-nav user-photo-fallback">{{slice .user.Username 0 1}}</span>
+                    {{end}}
+                    {{end}}
+
+                    <a href="/dashboard" class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/overview" class="nav-item">
+                        <span class="nav-icon">📈</span>
+                        <span>Overview</span>
+                    </a>
+                    <a href="/employees" class="nav-item">
+                        <span class="nav-icon">👥</span>
+                        <span>Manage Candidates</span>
+                    </a>
+                    <a href="/department" class="nav-item">
+                        <span class="nav-icon">🗂️</span>
+                        <span>Departments</span>
+                    </a>
+                    <a href="/report" class="nav-item">
+                        <span class="nav-icon">📋</span>
+                        <span>Report</span>
+                    </a>
+                    <a href="/team" class="nav-item active">
+                        <span class="nav-icon">👥</span>
+                        <span>Team</span>
+                    </a>
+                    <a href="/config" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Configuration</span>
+                    </a>
+                    <a href="/login" class="nav-item">
+                        <span class="nav-icon">↩️</span>
+                        <span>Return to login</span>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                {{if .error}}
+                <div style="color:#ef4444;margin-bottom:16px;">{{.error}}</div>
+                {{end}}
+
+                <div class="form-section">
+                    <h2>Invite Member</h2>
+                    <form method="POST" action="/team/invite" class="employee-form">
+                        {{csrfField}}
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required placeholder="member@company.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role:</label>
+                            <select name="role" id="role" class="mini-select" required>
+                                <option value="recruit">Recruit</option>
+                                <option value="viewer">Viewer</option>
+                                {{if eq .user.Role "owner"}}
+                                <option value="admin">Admin</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Invite</button>
+                    </form>
+                    <p style="opacity:.7;font-size:13px;margin-top:8px;">An email is sent with the person's role. If the email already has an account in this company, only the role is updated.</p>
+                </div>
+
+                <div class="departments-list-section">
+                    <h2>Members</h2>
+                    <table class="members-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{range .members}}
+                            <tr>
+                                <td>{{.Username}}</td>
+                                <td>{{.Email}}</td>
+                                <td><span class="role-badge role-{{.Role}}">{{.Role}}</span></td>
+                                <td class="member-actions">
+                                    {{if and (ne .ID $.user.ID) (or (eq .Role "recruit") (eq .Role "viewer")) (or (eq $.user.Role "owner") (eq $.user.Role "admin"))}}
+                                    <form method="POST" action="/team/{{.ID}}/role">
+                                        {{csrfField}}
+                                        <select name="role" class="mini-select" onchange="this.form.submit()">
+                                            <option value="recruit" {{if eq .Role "recruit"}}selected{{end}}>Recruit</option>
+                                            <option value="viewer" {{if eq .Role "viewer"}}selected{{end}}>Viewer</option>
+                                            {{if eq $.user.Role "owner"}}
+                                            <option value="admin" {{if eq .Role "admin"}}selected{{end}}>Admin</option>
+                                            {{end}}
+                                        </select>
+                                    </form>
+                                    {{end}}
+
+                                    {{if and (eq $.user.Role "owner") (ne .ID $.user.ID) (or (eq .Role "recruit") (eq .Role "viewer"))}}
+                                    <form method="POST" action="/team/{{.ID}}/transfer">
+                                        {{csrfField}}
+                                        <button type="submit" class="btn btn-secondary btn-sm">Transfer ownership</button>
+                                    </form>
+                                    {{end}}
+
+                                    {{if and (ne .ID $.user.ID) (or (eq .Role "recruit") (eq .Role "viewer")) (or (eq $.user.Role "owner") (eq $.user.Role "admin"))}}
+                                    <form method="POST" action="/team/{{.ID}}/remove">
+                                        {{csrfField}}
+                                        <button type="submit" class="btn btn-delete btn-sm danger" onclick="return confirm('Remove this member from the company?')">Remove</button>
+                                    </form>
+                                    {{end}}
+
+                                    {{if and (ne .ID $.user.ID) (eq .Role "owner")}}
+                                    <span style="opacity:.6;font-size:12px;">Owner</span>
+                                    {{end}}
+                                </td>
+                            </tr>
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="/js/dark-mode.js"></script>
+</body>
+</html>
